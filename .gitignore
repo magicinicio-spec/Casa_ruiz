@@ -1,0 +1,9 @@
+# .NET
+bin/
+obj/
+.vs/
+.tools/
+*.user
+
+# Entorno local
+.env
