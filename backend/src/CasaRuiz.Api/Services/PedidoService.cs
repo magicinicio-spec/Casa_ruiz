@@ -29,9 +29,9 @@ public class PedidoService(AppDbContext db)
             return null;
         }
 
-        if (pedido.Estado == EstadoPedido.Cancelado)
+        if (pedido.Estado != EstadoPedido.Activo)
         {
-            throw new ReglaNegocioException("No se puede editar un pedido cancelado.", StatusCodes.Status409Conflict);
+            throw new ReglaNegocioException("No se puede editar un pedido cancelado o cerrado.", StatusCodes.Status409Conflict);
         }
 
         var advertencias = await AplicarAsync(pedido, request, ct);
@@ -53,7 +53,41 @@ public class PedidoService(AppDbContext db)
             throw new ReglaNegocioException("El pedido ya está cancelado.", StatusCodes.Status409Conflict);
         }
 
+        if (pedido.Estado == EstadoPedido.Cerrado)
+        {
+            throw new ReglaNegocioException("No se puede cancelar un pedido cerrado.", StatusCodes.Status409Conflict);
+        }
+
         pedido.Estado = EstadoPedido.Cancelado;
+        await db.SaveChangesAsync(ct);
+
+        return await ObtenerAsync(id, ct);
+    }
+
+    /// <summary>
+    /// Cierre manual que hace el encargado después de confirmar que no hubo faltantes.
+    /// Requiere que el pedido esté entregado y recogido.
+    /// </summary>
+    public async Task<PedidoResponse?> CerrarAsync(int id, CancellationToken ct = default)
+    {
+        var pedido = await db.Pedidos.FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (pedido is null)
+        {
+            return null;
+        }
+
+        if (pedido.Estado != EstadoPedido.Activo)
+        {
+            throw new ReglaNegocioException("Solo se pueden cerrar pedidos activos.", StatusCodes.Status409Conflict);
+        }
+
+        if (pedido.RecogidoEn is null)
+        {
+            throw new ReglaNegocioException("El pedido debe estar recogido antes de cerrarse.", StatusCodes.Status409Conflict);
+        }
+
+        pedido.Estado = EstadoPedido.Cerrado;
+        pedido.CerradoEn = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
 
         return await ObtenerAsync(id, ct);
@@ -100,9 +134,9 @@ public class PedidoService(AppDbContext db)
             return null;
         }
 
-        if (pedido.Estado == EstadoPedido.Cancelado)
+        if (pedido.Estado != EstadoPedido.Activo)
         {
-            throw new ReglaNegocioException("No se puede entregar un pedido cancelado.", StatusCodes.Status409Conflict);
+            throw new ReglaNegocioException("Solo se pueden entregar pedidos activos.", StatusCodes.Status409Conflict);
         }
 
         if (pedido.EntregadoEn is not null)
@@ -124,9 +158,9 @@ public class PedidoService(AppDbContext db)
             return null;
         }
 
-        if (pedido.Estado == EstadoPedido.Cancelado)
+        if (pedido.Estado != EstadoPedido.Activo)
         {
-            throw new ReglaNegocioException("No se puede recoger un pedido cancelado.", StatusCodes.Status409Conflict);
+            throw new ReglaNegocioException("Solo se pueden recoger pedidos activos.", StatusCodes.Status409Conflict);
         }
 
         if (pedido.EntregadoEn is null)
@@ -360,6 +394,7 @@ public class PedidoService(AppDbContext db)
             p.Estado.ToString(),
             p.EntregadoEn,
             p.RecogidoEn,
+            p.CerradoEn,
             p.Lineas
                 .Select(l => new LineaResponse(
                     l.ArticuloId,

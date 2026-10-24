@@ -35,11 +35,15 @@ public class Pedido
     /// <summary>Momento en que se recogieron las piezas del cliente. Null mientras falte recogerlas.</summary>
     public DateTimeOffset? RecogidoEn { get; set; }
 
+    /// <summary>Momento en que el encargado cerró el pedido tras confirmar que no hubo faltantes.</summary>
+    public DateTimeOffset? CerradoEn { get; set; }
+
     public List<PedidoLinea> Lineas { get; set; } = [];
 }
 
 public enum EstadoPedido
 {
     Activo,
-    Cancelado
+    Cancelado,
+    Cerrado
 }

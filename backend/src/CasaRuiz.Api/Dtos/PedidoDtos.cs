@@ -44,6 +44,7 @@ public record PedidoResponse(
     string Estado,
     DateTimeOffset? EntregadoEn,
     DateTimeOffset? RecogidoEn,
+    DateTimeOffset? CerradoEn,
     List<LineaResponse> Lineas);
 
 /// <summary>Artículo cuya existencia general no alcanza para el pedido. Solo es un aviso, no bloquea el pedido.</summary>

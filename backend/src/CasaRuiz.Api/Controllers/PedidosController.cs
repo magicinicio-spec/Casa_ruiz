@@ -65,6 +65,21 @@ public class PedidosController(PedidoService pedidos) : ControllerBase
         }
     }
 
+    [HttpPost("{id:int}/cerrar")]
+    public async Task<ActionResult<PedidoResponse>> Close(int id)
+    {
+        try
+        {
+            var pedido = await pedidos.CerrarAsync(id);
+
+            return pedido is null ? NotFound() : Ok(pedido);
+        }
+        catch (ReglaNegocioException ex)
+        {
+            return StatusCode(ex.Codigo, new { error = ex.Message });
+        }
+    }
+
     [HttpPost("{id:int}/cancelar")]
     public async Task<ActionResult<PedidoResponse>> Cancel(int id)
     {

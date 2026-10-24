@@ -145,6 +145,9 @@ namespace CasaRuiz.Api.Migrations
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
 
+                    b.Property<DateTimeOffset?>("CerradoEn")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("ClienteId")
                         .HasColumnType("integer");
 
