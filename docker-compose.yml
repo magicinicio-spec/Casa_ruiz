@@ -23,7 +23,9 @@ services:
     environment:
       ConnectionStrings__Default: "Host=db;Port=5432;Database=casa_ruiz;Username=casa_ruiz;Password=${POSTGRES_PASSWORD}"
     ports:
-      - "8080:8080"
+      # API_IP es la IP del servidor en la red de la oficina. Docker publica los puertos
+      # saltándose UFW, por eso se amarra a esa IP y no a todas las interfaces.
+      - "${API_IP:-0.0.0.0}:8080:8080"
 
 volumes:
   pgdata:

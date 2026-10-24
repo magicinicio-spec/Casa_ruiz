@@ -6,7 +6,7 @@ namespace CasaRuiz.Api.Dtos;
 public record PedidoRequest(
     [Range(1, int.MaxValue)] int ClienteId,
     [property: JsonConverter(typeof(FechaHoraJsonConverter))] DateTime FechaHoraEntrega,
-    DateOnly FechaDevolucion,
+    [property: JsonConverter(typeof(FechaJsonConverter))] DateOnly FechaDevolucion,
     bool DireccionEsDelCliente,
     [MaxLength(400)] string? DireccionOtra,
     bool RequiereFactura,
@@ -31,7 +31,7 @@ public record PedidoResponse(
     int ClienteId,
     string ClienteNombre,
     [property: JsonConverter(typeof(FechaHoraJsonConverter))] DateTime FechaHoraEntrega,
-    DateOnly FechaDevolucion,
+    [property: JsonConverter(typeof(FechaJsonConverter))] DateOnly FechaDevolucion,
     string DireccionEntrega,
     bool DireccionEsDelCliente,
     bool RequiereFactura,
