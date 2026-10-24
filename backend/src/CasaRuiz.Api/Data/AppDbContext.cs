@@ -85,6 +85,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.ToTable("pedido_lineas", t =>
             {
                 t.HasCheckConstraint("ck_pedido_lineas_cantidad_positiva", "\"Cantidad\" > 0");
+                t.HasCheckConstraint("ck_pedido_lineas_devuelta_no_negativa",
+                    "\"CantidadDevuelta\" IS NULL OR \"CantidadDevuelta\" >= 0");
+                t.HasCheckConstraint("ck_pedido_lineas_daniada_no_negativa", "\"CantidadDaniada\" >= 0");
                 t.HasCheckConstraint("ck_pedido_lineas_un_tipo",
                     "(\"ArticuloId\" IS NULL) <> (\"PaqueteId\" IS NULL)");
             });

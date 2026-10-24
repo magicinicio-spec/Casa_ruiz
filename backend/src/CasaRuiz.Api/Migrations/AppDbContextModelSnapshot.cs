@@ -211,6 +211,12 @@ namespace CasaRuiz.Api.Migrations
                     b.Property<int>("Cantidad")
                         .HasColumnType("integer");
 
+                    b.Property<int>("CantidadDaniada")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("CantidadDevuelta")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Descripcion")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -237,6 +243,10 @@ namespace CasaRuiz.Api.Migrations
                     b.ToTable("pedido_lineas", null, t =>
                         {
                             t.HasCheckConstraint("ck_pedido_lineas_cantidad_positiva", "\"Cantidad\" > 0");
+
+                            t.HasCheckConstraint("ck_pedido_lineas_daniada_no_negativa", "\"CantidadDaniada\" >= 0");
+
+                            t.HasCheckConstraint("ck_pedido_lineas_devuelta_no_negativa", "\"CantidadDevuelta\" IS NULL OR \"CantidadDevuelta\" >= 0");
 
                             t.HasCheckConstraint("ck_pedido_lineas_un_tipo", "(\"ArticuloId\" IS NULL) <> (\"PaqueteId\" IS NULL)");
                         });

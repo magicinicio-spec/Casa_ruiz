@@ -65,12 +65,54 @@ public class PedidoService(AppDbContext db)
     }
 
     /// <summary>
+    /// Registra cuántas unidades de cada línea regresaron en buen estado y cuántas dañadas.
+    /// Solo aplica a pedidos activos ya entregados.
+    /// </summary>
+    public async Task<PedidoResponse?> RegistrarRevisionAsync(int id, RevisionRequest request, CancellationToken ct = default)
+    {
+        var pedido = await db.Pedidos.Include(p => p.Lineas).FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (pedido is null)
+        {
+            return null;
+        }
+
+        if (pedido.Estado != EstadoPedido.Activo)
+        {
+            throw new ReglaNegocioException("Solo se puede revisar un pedido activo.", StatusCodes.Status409Conflict);
+        }
+
+        if (pedido.EntregadoEn is null)
+        {
+            throw new ReglaNegocioException("El pedido debe estar entregado para registrar la revisión.", StatusCodes.Status409Conflict);
+        }
+
+        foreach (var entrada in request.Lineas)
+        {
+            var linea = pedido.Lineas.FirstOrDefault(l => l.Id == entrada.LineaId)
+                ?? throw new ReglaNegocioException($"La línea {entrada.LineaId} no pertenece a este pedido.");
+
+            if (entrada.CantidadDevuelta + entrada.CantidadDaniada > linea.Cantidad)
+            {
+                throw new ReglaNegocioException(
+                    $"En la línea {linea.Id} las unidades devueltas y dañadas ({entrada.CantidadDevuelta + entrada.CantidadDaniada}) superan lo entregado ({linea.Cantidad}).");
+            }
+
+            linea.CantidadDevuelta = entrada.CantidadDevuelta;
+            linea.CantidadDaniada = entrada.CantidadDaniada;
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        return await ObtenerAsync(id, ct);
+    }
+
+    /// <summary>
     /// Cierre manual que hace el encargado después de confirmar que no hubo faltantes.
     /// Requiere que el pedido esté entregado y recogido.
     /// </summary>
     public async Task<PedidoResponse?> CerrarAsync(int id, CancellationToken ct = default)
     {
-        var pedido = await db.Pedidos.FirstOrDefaultAsync(p => p.Id == id, ct);
+        var pedido = await db.Pedidos.Include(p => p.Lineas).FirstOrDefaultAsync(p => p.Id == id, ct);
         if (pedido is null)
         {
             return null;
@@ -84,6 +126,16 @@ public class PedidoService(AppDbContext db)
         if (pedido.RecogidoEn is null)
         {
             throw new ReglaNegocioException("El pedido debe estar recogido antes de cerrarse.", StatusCodes.Status409Conflict);
+        }
+
+        if (pedido.Lineas.Any(l => l.CantidadDevuelta is null))
+        {
+            throw new ReglaNegocioException("Falta registrar la revisión de devoluciones de todas las líneas.", StatusCodes.Status409Conflict);
+        }
+
+        if (pedido.Lineas.Any(l => l.Cantidad - l.CantidadDevuelta!.Value - l.CantidadDaniada > 0))
+        {
+            throw new ReglaNegocioException("No se puede cerrar: hay piezas faltantes.", StatusCodes.Status409Conflict);
         }
 
         pedido.Estado = EstadoPedido.Cerrado;
@@ -397,12 +449,16 @@ public class PedidoService(AppDbContext db)
             p.CerradoEn,
             p.Lineas
                 .Select(l => new LineaResponse(
+                    l.Id,
                     l.ArticuloId,
                     l.PaqueteId,
                     l.Descripcion,
                     l.Cantidad,
                     l.PrecioUnitario,
-                    l.Cantidad * l.PrecioUnitario))
+                    l.Cantidad * l.PrecioUnitario,
+                    l.CantidadDevuelta,
+                    l.CantidadDaniada,
+                    l.CantidadDevuelta is int devuelta ? l.Cantidad - devuelta - l.CantidadDaniada : null))
                 .ToList());
     }
 }

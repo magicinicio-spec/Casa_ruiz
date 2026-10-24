@@ -18,12 +18,24 @@ public record PedidoRequest(
 public record LineaRequest(int? ArticuloId, int? PaqueteId, [Range(1, int.MaxValue)] int Cantidad);
 
 public record LineaResponse(
+    int Id,
     int? ArticuloId,
     int? PaqueteId,
     string Descripcion,
     int Cantidad,
     decimal PrecioUnitario,
-    decimal Importe);
+    decimal Importe,
+    int? CantidadDevuelta,
+    int CantidadDaniada,
+    int? Faltante);
+
+/// <summary>Revisión de devoluciones. Las líneas que no se incluyan conservan su revisión anterior.</summary>
+public record RevisionRequest([MinLength(1)] List<RevisionLineaRequest> Lineas);
+
+public record RevisionLineaRequest(
+    [Range(1, int.MaxValue)] int LineaId,
+    [Range(0, int.MaxValue)] int CantidadDevuelta,
+    [Range(0, int.MaxValue)] int CantidadDaniada);
 
 public record PedidoResponse(
     int Id,
