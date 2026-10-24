@@ -1,10 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace CasaRuiz.Api.Dtos;
 
 public record PedidoRequest(
     [Range(1, int.MaxValue)] int ClienteId,
-    DateTime FechaHoraEntrega,
+    [property: JsonConverter(typeof(FechaHoraJsonConverter))] DateTime FechaHoraEntrega,
     DateOnly FechaDevolucion,
     bool DireccionEsDelCliente,
     [MaxLength(400)] string? DireccionOtra,
@@ -29,7 +30,7 @@ public record PedidoResponse(
     DateTimeOffset FechaCreacion,
     int ClienteId,
     string ClienteNombre,
-    DateTime FechaHoraEntrega,
+    [property: JsonConverter(typeof(FechaHoraJsonConverter))] DateTime FechaHoraEntrega,
     DateOnly FechaDevolucion,
     string DireccionEntrega,
     bool DireccionEsDelCliente,
@@ -41,6 +42,8 @@ public record PedidoResponse(
     decimal Saldo,
     bool Pagado,
     string Estado,
+    DateTimeOffset? EntregadoEn,
+    DateTimeOffset? RecogidoEn,
     List<LineaResponse> Lineas);
 
 /// <summary>Artículo cuya existencia general no alcanza para el pedido. Solo es un aviso, no bloquea el pedido.</summary>

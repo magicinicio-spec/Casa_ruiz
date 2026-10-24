@@ -29,6 +29,12 @@ public class Pedido
 
     public EstadoPedido Estado { get; set; } = EstadoPedido.Activo;
 
+    /// <summary>Momento en que se entregó el pedido. Null mientras no se entregue.</summary>
+    public DateTimeOffset? EntregadoEn { get; set; }
+
+    /// <summary>Momento en que se recogieron las piezas del cliente. Null mientras falte recogerlas.</summary>
+    public DateTimeOffset? RecogidoEn { get; set; }
+
     public List<PedidoLinea> Lineas { get; set; } = [];
 }
 

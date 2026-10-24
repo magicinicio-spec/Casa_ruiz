@@ -156,6 +156,9 @@ namespace CasaRuiz.Api.Migrations
                     b.Property<bool>("DireccionEsDelCliente")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTimeOffset?>("EntregadoEn")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Estado")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -172,6 +175,9 @@ namespace CasaRuiz.Api.Migrations
 
                     b.Property<bool>("Pagado")
                         .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("RecogidoEn")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("RequiereFactura")
                         .HasColumnType("boolean");

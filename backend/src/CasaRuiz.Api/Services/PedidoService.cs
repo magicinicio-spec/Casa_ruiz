@@ -84,6 +84,83 @@ public class PedidoService(AppDbContext db)
         return pedidos.Select(ToResponse).ToList();
     }
 
+    /// <summary>Pedidos activos que todavía no se han entregado, en orden de fecha de entrega.</summary>
+    public Task<List<PedidoResponse>> ListarColaEntregaAsync(CancellationToken ct = default) =>
+        ListarAsync(p => p.Estado == EstadoPedido.Activo && p.EntregadoEn == null, ct);
+
+    /// <summary>Pedidos ya entregados cuyas piezas todavía no se han recogido.</summary>
+    public Task<List<PedidoResponse>> ListarPendientesRecogerAsync(CancellationToken ct = default) =>
+        ListarAsync(p => p.Estado == EstadoPedido.Activo && p.EntregadoEn != null && p.RecogidoEn == null, ct);
+
+    public async Task<PedidoResponse?> MarcarEntregadoAsync(int id, CancellationToken ct = default)
+    {
+        var pedido = await db.Pedidos.FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (pedido is null)
+        {
+            return null;
+        }
+
+        if (pedido.Estado == EstadoPedido.Cancelado)
+        {
+            throw new ReglaNegocioException("No se puede entregar un pedido cancelado.", StatusCodes.Status409Conflict);
+        }
+
+        if (pedido.EntregadoEn is not null)
+        {
+            throw new ReglaNegocioException("El pedido ya fue entregado.", StatusCodes.Status409Conflict);
+        }
+
+        pedido.EntregadoEn = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        return await ObtenerAsync(id, ct);
+    }
+
+    public async Task<PedidoResponse?> MarcarRecogidoAsync(int id, CancellationToken ct = default)
+    {
+        var pedido = await db.Pedidos.FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (pedido is null)
+        {
+            return null;
+        }
+
+        if (pedido.Estado == EstadoPedido.Cancelado)
+        {
+            throw new ReglaNegocioException("No se puede recoger un pedido cancelado.", StatusCodes.Status409Conflict);
+        }
+
+        if (pedido.EntregadoEn is null)
+        {
+            throw new ReglaNegocioException("Primero marca el pedido como entregado.", StatusCodes.Status409Conflict);
+        }
+
+        if (pedido.RecogidoEn is not null)
+        {
+            throw new ReglaNegocioException("Las piezas de este pedido ya fueron recogidas.", StatusCodes.Status409Conflict);
+        }
+
+        pedido.RecogidoEn = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        return await ObtenerAsync(id, ct);
+    }
+
+    private async Task<List<PedidoResponse>> ListarAsync(
+        System.Linq.Expressions.Expression<Func<Pedido, bool>> filtro,
+        CancellationToken ct)
+    {
+        var pedidos = await db.Pedidos
+            .AsNoTracking()
+            .Include(p => p.Cliente)
+            .Include(p => p.Lineas)
+            .Where(filtro)
+            .OrderBy(p => p.FechaHoraEntrega)
+            .ThenBy(p => p.Id)
+            .ToListAsync(ct);
+
+        return pedidos.Select(ToResponse).ToList();
+    }
+
     /// <summary>Valida el pedido y copia sus datos y líneas. Devuelve las advertencias de inventario.</summary>
     private async Task<IReadOnlyList<AdvertenciaInventario>> AplicarAsync(
         Pedido pedido,
@@ -281,6 +358,8 @@ public class PedidoService(AppDbContext db)
             total - p.Anticipo,
             p.Pagado,
             p.Estado.ToString(),
+            p.EntregadoEn,
+            p.RecogidoEn,
             p.Lineas
                 .Select(l => new LineaResponse(
                     l.ArticuloId,
