@@ -197,6 +197,48 @@ namespace CasaRuiz.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CasaRuiz.Api.Models.PedidoArticulo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ArticuloId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CantidadDaniada")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("CantidadDevuelta")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("PedidoLineaId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PedidoLineaId");
+
+                    b.ToTable("pedido_articulos", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_pedido_articulos_cantidad_positiva", "\"Cantidad\" > 0");
+
+                            t.HasCheckConstraint("ck_pedido_articulos_daniada_no_negativa", "\"CantidadDaniada\" >= 0");
+
+                            t.HasCheckConstraint("ck_pedido_articulos_devuelta_no_negativa", "\"CantidadDevuelta\" IS NULL OR \"CantidadDevuelta\" >= 0");
+                        });
+                });
+
             modelBuilder.Entity("CasaRuiz.Api.Models.PedidoLinea", b =>
                 {
                     b.Property<int>("Id")
@@ -209,12 +251,6 @@ namespace CasaRuiz.Api.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("Cantidad")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("CantidadDaniada")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("CantidadDevuelta")
                         .HasColumnType("integer");
 
                     b.Property<string>("Descripcion")
@@ -243,10 +279,6 @@ namespace CasaRuiz.Api.Migrations
                     b.ToTable("pedido_lineas", null, t =>
                         {
                             t.HasCheckConstraint("ck_pedido_lineas_cantidad_positiva", "\"Cantidad\" > 0");
-
-                            t.HasCheckConstraint("ck_pedido_lineas_daniada_no_negativa", "\"CantidadDaniada\" >= 0");
-
-                            t.HasCheckConstraint("ck_pedido_lineas_devuelta_no_negativa", "\"CantidadDevuelta\" IS NULL OR \"CantidadDevuelta\" >= 0");
 
                             t.HasCheckConstraint("ck_pedido_lineas_un_tipo", "(\"ArticuloId\" IS NULL) <> (\"PaqueteId\" IS NULL)");
                         });
@@ -282,6 +314,17 @@ namespace CasaRuiz.Api.Migrations
                     b.Navigation("Cliente");
                 });
 
+            modelBuilder.Entity("CasaRuiz.Api.Models.PedidoArticulo", b =>
+                {
+                    b.HasOne("CasaRuiz.Api.Models.PedidoLinea", "PedidoLinea")
+                        .WithMany("Articulos")
+                        .HasForeignKey("PedidoLineaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PedidoLinea");
+                });
+
             modelBuilder.Entity("CasaRuiz.Api.Models.PedidoLinea", b =>
                 {
                     b.HasOne("CasaRuiz.Api.Models.Articulo", "Articulo")
@@ -315,6 +358,11 @@ namespace CasaRuiz.Api.Migrations
             modelBuilder.Entity("CasaRuiz.Api.Models.Pedido", b =>
                 {
                     b.Navigation("Lineas");
+                });
+
+            modelBuilder.Entity("CasaRuiz.Api.Models.PedidoLinea", b =>
+                {
+                    b.Navigation("Articulos");
                 });
 #pragma warning restore 612, 618
         }

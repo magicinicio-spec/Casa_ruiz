@@ -23,9 +23,5 @@ public class PedidoLinea
 
     public decimal PrecioUnitario { get; set; }
 
-    /// <summary>Unidades que regresaron en buen estado. Null mientras no se haya revisado la línea.</summary>
-    public int? CantidadDevuelta { get; set; }
-
-    /// <summary>Unidades que regresaron dañadas.</summary>
-    public int CantidadDaniada { get; set; }
+    public List<PedidoArticulo> Articulos { get; set; } = [];
 }

@@ -25,17 +25,16 @@ public record LineaResponse(
     int Cantidad,
     decimal PrecioUnitario,
     decimal Importe,
+    List<ArticuloPedidoResponse> Articulos);
+
+public record ArticuloPedidoResponse(
+    int Id,
+    int ArticuloId,
+    string Descripcion,
+    int Cantidad,
     int? CantidadDevuelta,
     int CantidadDaniada,
     int? Faltante);
-
-/// <summary>Revisión de devoluciones. Las líneas que no se incluyan conservan su revisión anterior.</summary>
-public record RevisionRequest([MinLength(1)] List<RevisionLineaRequest> Lineas);
-
-public record RevisionLineaRequest(
-    [Range(1, int.MaxValue)] int LineaId,
-    [Range(0, int.MaxValue)] int CantidadDevuelta,
-    [Range(0, int.MaxValue)] int CantidadDaniada);
 
 public record PedidoResponse(
     int Id,
@@ -58,6 +57,14 @@ public record PedidoResponse(
     DateTimeOffset? RecogidoEn,
     DateTimeOffset? CerradoEn,
     List<LineaResponse> Lineas);
+
+/// <summary>Revisión de devoluciones por artículo. Los artículos que no se incluyan conservan su revisión anterior.</summary>
+public record RevisionRequest([MinLength(1)] List<RevisionArticuloRequest> Articulos);
+
+public record RevisionArticuloRequest(
+    [Range(1, int.MaxValue)] int PedidoArticuloId,
+    [Range(0, int.MaxValue)] int CantidadDevuelta,
+    [Range(0, int.MaxValue)] int CantidadDaniada);
 
 /// <summary>Artículo cuya existencia general no alcanza para el pedido. Solo es un aviso, no bloquea el pedido.</summary>
 public record AdvertenciaInventario(

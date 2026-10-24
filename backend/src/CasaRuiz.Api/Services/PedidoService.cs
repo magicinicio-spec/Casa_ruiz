@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using CasaRuiz.Api.Data;
 using CasaRuiz.Api.Dtos;
 using CasaRuiz.Api.Models;
@@ -23,7 +24,11 @@ public class PedidoService(AppDbContext db)
 
     public async Task<PedidoGuardadoResponse?> ActualizarAsync(int id, PedidoRequest request, CancellationToken ct = default)
     {
-        var pedido = await db.Pedidos.Include(p => p.Lineas).FirstOrDefaultAsync(p => p.Id == id, ct);
+        var pedido = await db.Pedidos
+            .Include(p => p.Lineas)
+                .ThenInclude(l => l.Articulos)
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+
         if (pedido is null)
         {
             return null;
@@ -34,6 +39,11 @@ public class PedidoService(AppDbContext db)
             throw new ReglaNegocioException("No se puede editar un pedido cancelado o cerrado.", StatusCodes.Status409Conflict);
         }
 
+        if (TieneRevision(pedido))
+        {
+            throw new ReglaNegocioException("No se puede editar un pedido que ya tiene revisión registrada.", StatusCodes.Status409Conflict);
+        }
+
         var advertencias = await AplicarAsync(pedido, request, ct);
         await db.SaveChangesAsync(ct);
 
@@ -42,7 +52,11 @@ public class PedidoService(AppDbContext db)
 
     public async Task<PedidoResponse?> CancelarAsync(int id, CancellationToken ct = default)
     {
-        var pedido = await db.Pedidos.FirstOrDefaultAsync(p => p.Id == id, ct);
+        var pedido = await db.Pedidos
+            .Include(p => p.Lineas)
+                .ThenInclude(l => l.Articulos)
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+
         if (pedido is null)
         {
             return null;
@@ -58,125 +72,16 @@ public class PedidoService(AppDbContext db)
             throw new ReglaNegocioException("No se puede cancelar un pedido cerrado.", StatusCodes.Status409Conflict);
         }
 
+        if (TieneRevision(pedido))
+        {
+            throw new ReglaNegocioException("No se puede cancelar un pedido que ya tiene revisión registrada.", StatusCodes.Status409Conflict);
+        }
+
         pedido.Estado = EstadoPedido.Cancelado;
         await db.SaveChangesAsync(ct);
 
         return await ObtenerAsync(id, ct);
     }
-
-    /// <summary>
-    /// Registra cuántas unidades de cada línea regresaron en buen estado y cuántas dañadas.
-    /// Solo aplica a pedidos activos ya entregados.
-    /// </summary>
-    public async Task<PedidoResponse?> RegistrarRevisionAsync(int id, RevisionRequest request, CancellationToken ct = default)
-    {
-        var pedido = await db.Pedidos.Include(p => p.Lineas).FirstOrDefaultAsync(p => p.Id == id, ct);
-        if (pedido is null)
-        {
-            return null;
-        }
-
-        if (pedido.Estado != EstadoPedido.Activo)
-        {
-            throw new ReglaNegocioException("Solo se puede revisar un pedido activo.", StatusCodes.Status409Conflict);
-        }
-
-        if (pedido.EntregadoEn is null)
-        {
-            throw new ReglaNegocioException("El pedido debe estar entregado para registrar la revisión.", StatusCodes.Status409Conflict);
-        }
-
-        foreach (var entrada in request.Lineas)
-        {
-            var linea = pedido.Lineas.FirstOrDefault(l => l.Id == entrada.LineaId)
-                ?? throw new ReglaNegocioException($"La línea {entrada.LineaId} no pertenece a este pedido.");
-
-            if (entrada.CantidadDevuelta + entrada.CantidadDaniada > linea.Cantidad)
-            {
-                throw new ReglaNegocioException(
-                    $"En la línea {linea.Id} las unidades devueltas y dañadas ({entrada.CantidadDevuelta + entrada.CantidadDaniada}) superan lo entregado ({linea.Cantidad}).");
-            }
-
-            linea.CantidadDevuelta = entrada.CantidadDevuelta;
-            linea.CantidadDaniada = entrada.CantidadDaniada;
-        }
-
-        await db.SaveChangesAsync(ct);
-
-        return await ObtenerAsync(id, ct);
-    }
-
-    /// <summary>
-    /// Cierre manual que hace el encargado después de confirmar que no hubo faltantes.
-    /// Requiere que el pedido esté entregado y recogido.
-    /// </summary>
-    public async Task<PedidoResponse?> CerrarAsync(int id, CancellationToken ct = default)
-    {
-        var pedido = await db.Pedidos.Include(p => p.Lineas).FirstOrDefaultAsync(p => p.Id == id, ct);
-        if (pedido is null)
-        {
-            return null;
-        }
-
-        if (pedido.Estado != EstadoPedido.Activo)
-        {
-            throw new ReglaNegocioException("Solo se pueden cerrar pedidos activos.", StatusCodes.Status409Conflict);
-        }
-
-        if (pedido.RecogidoEn is null)
-        {
-            throw new ReglaNegocioException("El pedido debe estar recogido antes de cerrarse.", StatusCodes.Status409Conflict);
-        }
-
-        if (pedido.Lineas.Any(l => l.CantidadDevuelta is null))
-        {
-            throw new ReglaNegocioException("Falta registrar la revisión de devoluciones de todas las líneas.", StatusCodes.Status409Conflict);
-        }
-
-        if (pedido.Lineas.Any(l => l.Cantidad - l.CantidadDevuelta!.Value - l.CantidadDaniada > 0))
-        {
-            throw new ReglaNegocioException("No se puede cerrar: hay piezas faltantes.", StatusCodes.Status409Conflict);
-        }
-
-        pedido.Estado = EstadoPedido.Cerrado;
-        pedido.CerradoEn = DateTimeOffset.UtcNow;
-        await db.SaveChangesAsync(ct);
-
-        return await ObtenerAsync(id, ct);
-    }
-
-    public async Task<PedidoResponse?> ObtenerAsync(int id, CancellationToken ct = default)
-    {
-        var pedido = await db.Pedidos
-            .AsNoTracking()
-            .Include(p => p.Cliente)
-            .Include(p => p.Lineas)
-            .FirstOrDefaultAsync(p => p.Id == id, ct);
-
-        return pedido is null ? null : ToResponse(pedido);
-    }
-
-    public async Task<List<PedidoResponse>> ListarAsync(EstadoPedido? estado, CancellationToken ct = default)
-    {
-        var query = db.Pedidos.AsNoTracking().Include(p => p.Cliente).Include(p => p.Lineas).AsQueryable();
-
-        if (estado is not null)
-        {
-            query = query.Where(p => p.Estado == estado);
-        }
-
-        var pedidos = await query.OrderBy(p => p.FechaHoraEntrega).ToListAsync(ct);
-
-        return pedidos.Select(ToResponse).ToList();
-    }
-
-    /// <summary>Pedidos activos que todavía no se han entregado, en orden de fecha de entrega.</summary>
-    public Task<List<PedidoResponse>> ListarColaEntregaAsync(CancellationToken ct = default) =>
-        ListarAsync(p => p.Estado == EstadoPedido.Activo && p.EntregadoEn == null, ct);
-
-    /// <summary>Pedidos ya entregados cuyas piezas todavía no se han recogido.</summary>
-    public Task<List<PedidoResponse>> ListarPendientesRecogerAsync(CancellationToken ct = default) =>
-        ListarAsync(p => p.Estado == EstadoPedido.Activo && p.EntregadoEn != null && p.RecogidoEn == null, ct);
 
     public async Task<PedidoResponse?> MarcarEntregadoAsync(int id, CancellationToken ct = default)
     {
@@ -231,14 +136,161 @@ public class PedidoService(AppDbContext db)
         return await ObtenerAsync(id, ct);
     }
 
-    private async Task<List<PedidoResponse>> ListarAsync(
-        System.Linq.Expressions.Expression<Func<Pedido, bool>> filtro,
+    /// <summary>
+    /// Registra cuántas unidades de cada artículo regresaron en buen estado y cuántas dañadas.
+    /// Lo que no regresó (faltante) y lo dañado se descuentan de la existencia general.
+    /// </summary>
+    public async Task<PedidoResponse?> RegistrarRevisionAsync(int id, RevisionRequest request, CancellationToken ct = default)
+    {
+        var pedido = await db.Pedidos
+            .Include(p => p.Lineas)
+                .ThenInclude(l => l.Articulos)
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+
+        if (pedido is null)
+        {
+            return null;
+        }
+
+        if (pedido.Estado != EstadoPedido.Activo)
+        {
+            throw new ReglaNegocioException("Solo se puede revisar un pedido activo.", StatusCodes.Status409Conflict);
+        }
+
+        if (pedido.EntregadoEn is null)
+        {
+            throw new ReglaNegocioException("El pedido debe estar entregado para registrar la revisión.", StatusCodes.Status409Conflict);
+        }
+
+        var items = pedido.Lineas.SelectMany(l => l.Articulos).ToDictionary(a => a.Id);
+        var articuloIds = items.Values.Select(a => a.ArticuloId).Distinct().ToList();
+        var articulos = await db.Articulos
+            .Where(a => articuloIds.Contains(a.Id))
+            .ToDictionaryAsync(a => a.Id, ct);
+
+        foreach (var entrada in request.Articulos)
+        {
+            if (!items.TryGetValue(entrada.PedidoArticuloId, out var item))
+            {
+                throw new ReglaNegocioException($"El artículo de pedido {entrada.PedidoArticuloId} no pertenece a este pedido.");
+            }
+
+            if (entrada.CantidadDevuelta + entrada.CantidadDaniada > item.Cantidad)
+            {
+                throw new ReglaNegocioException(
+                    $"En {item.Descripcion} las unidades devueltas y dañadas ({entrada.CantidadDevuelta + entrada.CantidadDaniada}) superan lo entregado ({item.Cantidad}).");
+            }
+
+            // Lo que no regresó en buen estado sale de la existencia: faltante + dañado.
+            // Se descuenta solo la diferencia contra la revisión anterior, para poder corregir la revisión.
+            var perdidaAnterior = item.CantidadDevuelta is int devueltaAnterior ? item.Cantidad - devueltaAnterior : 0;
+            var perdidaNueva = item.Cantidad - entrada.CantidadDevuelta;
+
+            var articulo = articulos[item.ArticuloId];
+            var existenciaNueva = articulo.ExistenciaTotal - (perdidaNueva - perdidaAnterior);
+            if (existenciaNueva < 0)
+            {
+                throw new ReglaNegocioException(
+                    $"La existencia de {articulo.Descripcion} no alcanza para registrar esa pérdida.");
+            }
+
+            articulo.ExistenciaTotal = existenciaNueva;
+            item.CantidadDevuelta = entrada.CantidadDevuelta;
+            item.CantidadDaniada = entrada.CantidadDaniada;
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        return await ObtenerAsync(id, ct);
+    }
+
+    /// <summary>
+    /// Cierre manual que hace el encargado. Requiere pedido recogido, revisión completa
+    /// y ningún faltante ni artículo dañado.
+    /// </summary>
+    public async Task<PedidoResponse?> CerrarAsync(int id, CancellationToken ct = default)
+    {
+        var pedido = await db.Pedidos
+            .Include(p => p.Lineas)
+                .ThenInclude(l => l.Articulos)
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+
+        if (pedido is null)
+        {
+            return null;
+        }
+
+        if (pedido.Estado != EstadoPedido.Activo)
+        {
+            throw new ReglaNegocioException("Solo se pueden cerrar pedidos activos.", StatusCodes.Status409Conflict);
+        }
+
+        if (pedido.RecogidoEn is null)
+        {
+            throw new ReglaNegocioException("El pedido debe estar recogido antes de cerrarse.", StatusCodes.Status409Conflict);
+        }
+
+        var articulos = pedido.Lineas.SelectMany(l => l.Articulos).ToList();
+
+        if (articulos.Any(a => a.CantidadDevuelta is null))
+        {
+            throw new ReglaNegocioException("Falta registrar la revisión de devoluciones de todos los artículos.", StatusCodes.Status409Conflict);
+        }
+
+        if (articulos.Any(a => a.Cantidad - a.CantidadDevuelta!.Value - a.CantidadDaniada > 0))
+        {
+            throw new ReglaNegocioException("No se puede cerrar: hay piezas faltantes.", StatusCodes.Status409Conflict);
+        }
+
+        if (articulos.Any(a => a.CantidadDaniada > 0))
+        {
+            throw new ReglaNegocioException("No se puede cerrar: hay piezas dañadas.", StatusCodes.Status409Conflict);
+        }
+
+        pedido.Estado = EstadoPedido.Cerrado;
+        pedido.CerradoEn = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        return await ObtenerAsync(id, ct);
+    }
+
+    public async Task<PedidoResponse?> ObtenerAsync(int id, CancellationToken ct = default)
+    {
+        var pedido = await Consulta()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+
+        return pedido is null ? null : ToResponse(pedido);
+    }
+
+    public async Task<List<PedidoResponse>> ListarAsync(EstadoPedido? estado, CancellationToken ct = default)
+    {
+        var query = Consulta().AsNoTracking();
+
+        if (estado is not null)
+        {
+            query = query.Where(p => p.Estado == estado);
+        }
+
+        var pedidos = await query.OrderBy(p => p.FechaHoraEntrega).ThenBy(p => p.Id).ToListAsync(ct);
+
+        return pedidos.Select(ToResponse).ToList();
+    }
+
+    /// <summary>Pedidos activos que todavía no se han entregado, en orden de fecha de entrega.</summary>
+    public Task<List<PedidoResponse>> ListarColaEntregaAsync(CancellationToken ct = default) =>
+        ListarFiltradoAsync(p => p.Estado == EstadoPedido.Activo && p.EntregadoEn == null, ct);
+
+    /// <summary>Pedidos ya entregados cuyas piezas todavía no se han recogido.</summary>
+    public Task<List<PedidoResponse>> ListarPendientesRecogerAsync(CancellationToken ct = default) =>
+        ListarFiltradoAsync(p => p.Estado == EstadoPedido.Activo && p.EntregadoEn != null && p.RecogidoEn == null, ct);
+
+    private async Task<List<PedidoResponse>> ListarFiltradoAsync(
+        Expression<Func<Pedido, bool>> filtro,
         CancellationToken ct)
     {
-        var pedidos = await db.Pedidos
+        var pedidos = await Consulta()
             .AsNoTracking()
-            .Include(p => p.Cliente)
-            .Include(p => p.Lineas)
             .Where(filtro)
             .OrderBy(p => p.FechaHoraEntrega)
             .ThenBy(p => p.Id)
@@ -246,6 +298,15 @@ public class PedidoService(AppDbContext db)
 
         return pedidos.Select(ToResponse).ToList();
     }
+
+    private IQueryable<Pedido> Consulta() =>
+        db.Pedidos
+            .Include(p => p.Cliente)
+            .Include(p => p.Lineas)
+                .ThenInclude(l => l.Articulos);
+
+    private static bool TieneRevision(Pedido pedido) =>
+        pedido.Lineas.SelectMany(l => l.Articulos).Any(a => a.CantidadDevuelta is not null);
 
     /// <summary>Valida el pedido y copia sus datos y líneas. Devuelve las advertencias de inventario.</summary>
     private async Task<IReadOnlyList<AdvertenciaInventario>> AplicarAsync(
@@ -288,7 +349,7 @@ public class PedidoService(AppDbContext db)
         pedido.Lineas.Clear();
         pedido.Lineas.AddRange(lineas);
 
-        return await CalcularAdvertenciasAsync(lineas, pedido.Id, ct);
+        return await CalcularAdvertenciasAsync(lineas.SelectMany(l => l.Articulos).ToList(), pedido.Id, ct);
     }
 
     private async Task<List<PedidoLinea>> ConstruirLineasAsync(List<LineaRequest> entradas, CancellationToken ct)
@@ -327,10 +388,18 @@ public class PedidoService(AppDbContext db)
                 lineas.Add(new PedidoLinea
                 {
                     ArticuloId = articulo.Id,
-                    Articulo = articulo,
                     Descripcion = articulo.Descripcion,
                     Cantidad = entrada.Cantidad,
                     PrecioUnitario = articulo.PrecioRenta,
+                    Articulos =
+                    [
+                        new PedidoArticulo
+                        {
+                            ArticuloId = articulo.Id,
+                            Descripcion = articulo.Descripcion,
+                            Cantidad = entrada.Cantidad,
+                        },
+                    ],
                 });
             }
             else
@@ -341,13 +410,21 @@ public class PedidoService(AppDbContext db)
                     throw new ReglaNegocioException($"El paquete {paqueteId} no existe.");
                 }
 
+                // Se guardan los artículos del paquete tal como están al crear el pedido.
                 lineas.Add(new PedidoLinea
                 {
                     PaqueteId = paquete.Id,
-                    Paquete = paquete,
                     Descripcion = paquete.Nombre,
                     Cantidad = entrada.Cantidad,
                     PrecioUnitario = paquete.PrecioRenta,
+                    Articulos = paquete.Componentes
+                        .Select(c => new PedidoArticulo
+                        {
+                            ArticuloId = c.ArticuloId,
+                            Descripcion = c.Articulo.Descripcion,
+                            Cantidad = c.Cantidad * entrada.Cantidad,
+                        })
+                        .ToList(),
                 });
             }
         }
@@ -356,24 +433,28 @@ public class PedidoService(AppDbContext db)
     }
 
     /// <summary>
-    /// Compara las unidades del pedido contra la existencia general, descontando las que ya comprometen
-    /// otros pedidos activos. Solo genera avisos cuando el resultado es negativo.
+    /// Compara las unidades del pedido contra la existencia general, descontando las que otros pedidos
+    /// activos todavía tienen fuera. Un artículo ya revisado ya no cuenta como comprometido.
+    /// Solo genera avisos cuando el resultado es negativo.
     /// </summary>
     private async Task<IReadOnlyList<AdvertenciaInventario>> CalcularAdvertenciasAsync(
-        List<PedidoLinea> lineas,
+        List<PedidoArticulo> nuevos,
         int pedidoId,
         CancellationToken ct)
     {
-        var solicitadas = Unidades(lineas);
+        var solicitadas = nuevos
+            .GroupBy(a => a.ArticuloId)
+            .ToDictionary(g => g.Key, g => g.Sum(a => a.Cantidad));
 
-        var lineasComprometidas = await db.PedidoLineas
-            .AsNoTracking()
-            .Include(l => l.Paquete)
-                .ThenInclude(p => p!.Componentes)
-            .Where(l => l.Pedido.Estado == EstadoPedido.Activo && l.PedidoId != pedidoId)
-            .ToListAsync(ct);
-
-        var comprometidas = Unidades(lineasComprometidas);
+        var comprometidas = (await db.PedidoArticulos
+                .AsNoTracking()
+                .Where(a => a.CantidadDevuelta == null
+                    && a.PedidoLinea.Pedido.Estado == EstadoPedido.Activo
+                    && a.PedidoLinea.PedidoId != pedidoId)
+                .Select(a => new { a.ArticuloId, a.Cantidad })
+                .ToListAsync(ct))
+            .GroupBy(a => a.ArticuloId)
+            .ToDictionary(g => g.Key, g => g.Sum(a => a.Cantidad));
 
         var articuloIds = solicitadas.Keys.ToList();
         var articulos = await db.Articulos.AsNoTracking().Where(a => articuloIds.Contains(a.Id)).ToListAsync(ct);
@@ -394,32 +475,6 @@ public class PedidoService(AppDbContext db)
             .Where(a => a.Restantes < 0)
             .ToList();
     }
-
-    /// <summary>Convierte las líneas en unidades por artículo, expandiendo los paquetes en sus componentes.</summary>
-    private static Dictionary<int, int> Unidades(IEnumerable<PedidoLinea> lineas)
-    {
-        var unidades = new Dictionary<int, int>();
-
-        foreach (var linea in lineas)
-        {
-            if (linea.ArticuloId is int articuloId)
-            {
-                Sumar(unidades, articuloId, linea.Cantidad);
-            }
-            else if (linea.Paquete is not null)
-            {
-                foreach (var componente in linea.Paquete.Componentes)
-                {
-                    Sumar(unidades, componente.ArticuloId, componente.Cantidad * linea.Cantidad);
-                }
-            }
-        }
-
-        return unidades;
-    }
-
-    private static void Sumar(Dictionary<int, int> unidades, int articuloId, int cantidad) =>
-        unidades[articuloId] = unidades.GetValueOrDefault(articuloId) + cantidad;
 
     private static PedidoResponse ToResponse(Pedido p)
     {
@@ -456,9 +511,16 @@ public class PedidoService(AppDbContext db)
                     l.Cantidad,
                     l.PrecioUnitario,
                     l.Cantidad * l.PrecioUnitario,
-                    l.CantidadDevuelta,
-                    l.CantidadDaniada,
-                    l.CantidadDevuelta is int devuelta ? l.Cantidad - devuelta - l.CantidadDaniada : null))
+                    l.Articulos
+                        .Select(a => new ArticuloPedidoResponse(
+                            a.Id,
+                            a.ArticuloId,
+                            a.Descripcion,
+                            a.Cantidad,
+                            a.CantidadDevuelta,
+                            a.CantidadDaniada,
+                            a.CantidadDevuelta is int devuelta ? a.Cantidad - devuelta - a.CantidadDaniada : null))
+                        .ToList()))
                 .ToList());
     }
 }

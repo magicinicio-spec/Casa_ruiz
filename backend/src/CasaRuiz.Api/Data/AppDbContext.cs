@@ -17,6 +17,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<PedidoLinea> PedidoLineas => Set<PedidoLinea>();
 
+    public DbSet<PedidoArticulo> PedidoArticulos => Set<PedidoArticulo>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Articulo>(entity =>
@@ -85,9 +87,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.ToTable("pedido_lineas", t =>
             {
                 t.HasCheckConstraint("ck_pedido_lineas_cantidad_positiva", "\"Cantidad\" > 0");
-                t.HasCheckConstraint("ck_pedido_lineas_devuelta_no_negativa",
-                    "\"CantidadDevuelta\" IS NULL OR \"CantidadDevuelta\" >= 0");
-                t.HasCheckConstraint("ck_pedido_lineas_daniada_no_negativa", "\"CantidadDaniada\" >= 0");
                 t.HasCheckConstraint("ck_pedido_lineas_un_tipo",
                     "(\"ArticuloId\" IS NULL) <> (\"PaqueteId\" IS NULL)");
             });
@@ -105,6 +104,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany()
                 .HasForeignKey(l => l.PaqueteId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PedidoArticulo>(entity =>
+        {
+            entity.ToTable("pedido_articulos", t =>
+            {
+                t.HasCheckConstraint("ck_pedido_articulos_cantidad_positiva", "\"Cantidad\" > 0");
+                t.HasCheckConstraint("ck_pedido_articulos_devuelta_no_negativa",
+                    "\"CantidadDevuelta\" IS NULL OR \"CantidadDevuelta\" >= 0");
+                t.HasCheckConstraint("ck_pedido_articulos_daniada_no_negativa", "\"CantidadDaniada\" >= 0");
+            });
+            entity.Property(a => a.Descripcion).HasMaxLength(200).IsRequired();
+            entity.HasOne(a => a.PedidoLinea)
+                .WithMany(l => l.Articulos)
+                .HasForeignKey(a => a.PedidoLineaId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
