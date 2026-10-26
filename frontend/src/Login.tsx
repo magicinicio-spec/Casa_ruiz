@@ -27,9 +27,15 @@ export default function Login({ onEntrar }: Props) {
 
   return (
     <main className="login">
-      <section className="login__tarjeta">
-        <h1 className="titulo-display">Casa Ruiz</h1>
-        <p className="texto-lead">Renta de sillas, mesas y más. Inicia sesión para continuar.</p>
+      <div className="login__diseno">
+        <section className="login__hero" aria-hidden="true">
+          <h2 className="titulo-display">Casa Ruiz</h2>
+          <p>Renta de sillas, mesas y más. Pedidos, entregas e inventario en un solo lugar.</p>
+        </section>
+
+        <section className="panel login__tarjeta">
+          <h1 className="titulo-subheading">Iniciar sesión</h1>
+          <p className="texto-lead">Usa tu usuario y contraseña.</p>
 
         <form className="login__form" onSubmit={enviar}>
           <label className="campo">
@@ -66,7 +72,8 @@ export default function Login({ onEntrar }: Props) {
             {enviando ? "Entrando…" : "Entrar"}
           </button>
         </form>
-      </section>
+        </section>
+      </div>
     </main>
   );
 }

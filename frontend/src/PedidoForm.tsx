@@ -1,3 +1,4 @@
+import ClienteBuscador from "./ClienteBuscador";
 import { type FormEvent, useState } from "react";
 import { type Pedido, ErrorApi } from "./api";
 import { aFecha, aFechaHora, desdeFecha, desdeFechaHora } from "./fechas";
@@ -22,6 +23,7 @@ interface Props {
   pedido?: Pedido;
   onGuardado: (resultado: PedidoGuardado) => void;
   onCancelar: () => void;
+  onClienteNuevo: (cliente: Cliente) => void;
 }
 
 interface LineaForm {
@@ -30,7 +32,7 @@ interface LineaForm {
   cantidad: number;
 }
 
-export default function PedidoForm({ token, clientes, articulos, paquetes, pedido, onGuardado, onCancelar }: Props) {
+export default function PedidoForm({ token, clientes, articulos, paquetes, pedido, onGuardado, onCancelar, onClienteNuevo }: Props) {
   const clienteInicial = pedido ? clientes.find((c) => c.id === pedido.clienteId) : undefined;
   const direccionDelCliente = pedido ? clienteInicial?.direccion === pedido.direccionEntrega : true;
 
@@ -108,13 +110,13 @@ export default function PedidoForm({ token, clientes, articulos, paquetes, pedid
       {error && <Aviso>{error}</Aviso>}
 
       <div className="formulario">
-        <Campo etiqueta="Cliente">
-          <select className="campo__input" required value={clienteId} onChange={(e) => setClienteId(Number(e.target.value))}>
-            {clientes.map((c) => (
-              <option key={c.id} value={c.id}>{c.nombreCompleto}</option>
-            ))}
-          </select>
-        </Campo>
+        <ClienteBuscador
+          token={token}
+          clientes={clientes}
+          valor={clienteId}
+          onChange={setClienteId}
+          onClienteNuevo={onClienteNuevo}
+        />
         <Campo etiqueta="Fecha y hora de entrega">
           <input className="campo__input" type="datetime-local" required value={fechaEntrega}
             onChange={(e) => setFechaEntrega(e.target.value)} />

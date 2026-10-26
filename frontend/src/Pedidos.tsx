@@ -95,6 +95,7 @@ export default function Pedidos({ token, puedeOperar, puedeControlar }: Props) {
             paquetes={paquetes}
             pedido={vista.modo === "editar" ? vista.pedido : undefined}
             onGuardado={guardado}
+            onClienteNuevo={(cliente) => setClientes((prev) => [...prev, cliente])}
             onCancelar={() => setVista(vista.modo === "editar" ? { modo: "detalle", id: vista.pedido.id } : { modo: "lista" })}
           />
         )}
