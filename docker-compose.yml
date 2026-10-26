@@ -22,6 +22,12 @@ services:
         condition: service_healthy
     environment:
       ConnectionStrings__Default: "Host=db;Port=5432;Database=casa_ruiz;Username=casa_ruiz;Password=${POSTGRES_PASSWORD}"
+      # Clave para firmar las sesiones (mínimo 32 caracteres).
+      Jwt__Key: ${JWT_KEY:?Define JWT_KEY en el archivo .env}
+      # Primer administrador. Solo se usa cuando no hay ningún usuario en el sistema.
+      Admin__NombreUsuario: ${ADMIN_USUARIO:?Define ADMIN_USUARIO en el archivo .env}
+      Admin__Password: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD en el archivo .env}
+      Admin__NombreCompleto: ${ADMIN_NOMBRE:-Administrador}
     ports:
       # API_IP es la IP del servidor en la red de la oficina. Docker publica los puertos
       # saltándose UFW, por eso se amarra a esa IP y no a todas las interfaces.

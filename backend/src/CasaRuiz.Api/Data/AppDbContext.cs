@@ -21,6 +21,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<ResolucionDano> ResolucionesDano => Set<ResolucionDano>();
 
+    public DbSet<Usuario> Usuarios => Set<Usuario>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Articulo>(entity =>
@@ -122,6 +124,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany(l => l.Articulos)
                 .HasForeignKey(a => a.PedidoLineaId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Usuario>(entity =>
+        {
+            entity.ToTable("usuarios");
+            entity.Property(u => u.NombreCompleto).HasMaxLength(200).IsRequired();
+            entity.Property(u => u.Telefono).HasMaxLength(30).IsRequired();
+            entity.Property(u => u.NombreUsuario).HasMaxLength(50).IsRequired();
+            entity.Property(u => u.PasswordHash).HasMaxLength(500).IsRequired();
+            entity.Property(u => u.Rol).HasConversion<string>().HasMaxLength(30);
+            entity.HasIndex(u => u.NombreUsuario).IsUnique();
         });
 
         modelBuilder.Entity<ResolucionDano>(entity =>

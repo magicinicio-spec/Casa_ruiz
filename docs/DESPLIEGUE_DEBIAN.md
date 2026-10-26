@@ -60,7 +60,12 @@ Ajusta dos valores:
 - `POSTGRES_PASSWORD`: una contraseña con letras y números. Puedes generarla con `openssl rand -hex 16`.
 - `API_IP`: la IP fija del servidor en la red de la oficina.
 
+- `JWT_KEY`: la clave que firma las sesiones. Genérala con `openssl rand -hex 32`.
+- `ADMIN_USUARIO` y `ADMIN_PASSWORD`: el primer administrador. Solo se crea cuando la tabla de usuarios está vacía. Después de entrar, cambia la contraseña o crea tu usuario definitivo; las variables ya no se vuelven a usar.
+
 El archivo `.env` no se sube al repositorio.
+
+> Cambiar `JWT_KEY` cierra todas las sesiones abiertas. Si cambias `ADMIN_PASSWORD` después del primer arranque, no tiene efecto: la contraseña se cambia desde el sistema.
 
 ## 5. Levantar el sistema
 
@@ -75,10 +80,12 @@ La primera vez tarda unos minutos porque construye la imagen. Al iniciar, la API
 Prueba desde cualquier equipo de la oficina:
 
 ```bash
-curl http://192.168.1.10:8080/api/articulos
+curl -i -X POST http://192.168.1.10:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"nombreUsuario":"admin","password":"TU_ADMIN_PASSWORD"}'
 ```
 
-Debe responder `[]` (o la lista de artículos si ya hay datos).
+Debe responder `200` con un `token`. Sin sesión, las demás rutas responden `401`.
 
 ## 6. Firewall
 
