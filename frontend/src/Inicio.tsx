@@ -1,14 +1,17 @@
-import type { Sesion } from "./api";
-import Dashboard from "./Dashboard";
-import Reportes from "./Reportes";
 import { useState } from "react";
+import type { RolUsuario, Sesion } from "./api";
+import Dashboard from "./Dashboard";
+import Entregas from "./Entregas";
+import Reportes from "./Reportes";
 
 interface Props {
   sesion: Sesion;
   onSalir: () => void;
 }
 
-const nombresDeRol: Record<Sesion["usuario"]["rol"], string> = {
+type Seccion = "dashboard" | "reportes" | "entregas";
+
+const nombresDeRol: Record<RolUsuario, string> = {
   Administrador: "Administrador",
   Superior: "Superior",
   Vendedor: "Vendedor",
@@ -16,13 +19,25 @@ const nombresDeRol: Record<Sesion["usuario"]["rol"], string> = {
   VendedorRepartidor: "Vendedor y repartidor",
 };
 
-// Roles que ven el dashboard. El repartidor solo usa la cola de entregas.
-const rolesConDashboard: Sesion["usuario"]["rol"][] = ["Administrador", "Superior", "Vendedor", "VendedorRepartidor"];
+// Secciones visibles por rol. Ver docs/REGLAS_NEGOCIO.md, sección de usuarios.
+const seccionesPorRol: Record<RolUsuario, Seccion[]> = {
+  Administrador: ["dashboard", "reportes", "entregas"],
+  Superior: ["dashboard", "reportes", "entregas"],
+  Vendedor: ["dashboard", "reportes"],
+  Repartidor: ["entregas"],
+  VendedorRepartidor: ["dashboard", "reportes", "entregas"],
+};
+
+const nombresDeSeccion: Record<Seccion, string> = {
+  dashboard: "Dashboard",
+  reportes: "Reportes",
+  entregas: "Entregas",
+};
 
 export default function Inicio({ sesion, onSalir }: Props) {
   const { usuario } = sesion;
-  const verDashboard = rolesConDashboard.includes(usuario.rol);
-  const [vista, setVista] = useState<"dashboard" | "reportes">("dashboard");
+  const secciones = seccionesPorRol[usuario.rol];
+  const [seccion, setSeccion] = useState<Seccion>(secciones[0]);
 
   return (
     <div className="pagina">
@@ -39,32 +54,38 @@ export default function Inicio({ sesion, onSalir }: Props) {
       </header>
 
       <main className="contenido">
-        {verDashboard ? (
+        {secciones.length > 1 && (
+          <nav className="pestanas" aria-label="Secciones">
+            {secciones.map((s) => (
+              <button
+                key={s}
+                type="button"
+                className={`boton pestanita${seccion === s ? " pestanita--activa" : ""}`}
+                aria-pressed={seccion === s}
+                onClick={() => setSeccion(s)}
+              >
+                {nombresDeSeccion[s]}
+              </button>
+            ))}
+          </nav>
+        )}
+
+        {seccion === "dashboard" && (
           <>
-            <nav className="pestanas" aria-label="Secciones">
-              <button
-                type="button"
-                className={`boton pestanita${vista === "dashboard" ? " pestanita--activa" : ""}`}
-                aria-pressed={vista === "dashboard"}
-                onClick={() => setVista("dashboard")}
-              >
-                Dashboard
-              </button>
-              <button
-                type="button"
-                className={`boton pestanita${vista === "reportes" ? " pestanita--activa" : ""}`}
-                aria-pressed={vista === "reportes"}
-                onClick={() => setVista("reportes")}
-              >
-                Reportes
-              </button>
-            </nav>
-            {vista === "dashboard" ? <Dashboard token={sesion.token} /> : <Reportes token={sesion.token} />}
+            <h1 className="titulo-heading-lg">Dashboard</h1>
+            <Dashboard token={sesion.token} />
           </>
-        ) : (
+        )}
+        {seccion === "reportes" && (
           <>
-            <h1 className="titulo-heading-lg">Hola, {usuario.nombreCompleto.split(" ")[0]}</h1>
-            <p className="texto-lead">La cola de entregas llegará en la siguiente pantalla.</p>
+            <h1 className="titulo-heading-lg">Reportes</h1>
+            <Reportes token={sesion.token} />
+          </>
+        )}
+        {seccion === "entregas" && (
+          <>
+            <h1 className="titulo-heading-lg">Entregas</h1>
+            <Entregas token={sesion.token} />
           </>
         )}
       </main>

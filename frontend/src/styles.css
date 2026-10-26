@@ -401,3 +401,56 @@ p {
   text-align: right;
   white-space: nowrap;
 }
+
+/* Entregas */
+.entregas,
+.entregas__lista {
+  display: grid;
+  gap: 16px;
+}
+
+.entregas__lista {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.entrega {
+  align-content: start;
+}
+
+.entrega__encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.entrega__telefono {
+  color: var(--color-signal-blue);
+  text-decoration: none;
+}
+
+.entrega__direccion {
+  color: var(--color-charcoal);
+}
+
+.entrega__lineas {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--color-charcoal);
+}
+
+.entrega .boton {
+  justify-self: start;
+}
+
+.boton:disabled.boton--primario {
+  color: var(--color-fog);
+  border-color: var(--color-fog);
+}
+
+.descargas {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

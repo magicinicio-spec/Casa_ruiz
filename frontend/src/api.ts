@@ -149,3 +149,75 @@ export function obtenerPendientesRecoger(token: string): Promise<ReportePedido[]
 export function obtenerInventario(token: string): Promise<ReporteInventarioArticulo[]> {
   return peticion<ReporteInventarioArticulo[]>("/api/reportes/inventario", {}, token);
 }
+
+/** Descarga un reporte en Excel o PDF. Va con la sesión porque la ruta requiere token. */
+export async function descargarReporte(ruta: string, token: string, nombreRespaldo: string): Promise<void> {
+  let respuesta: Response;
+  try {
+    respuesta = await fetch(`${baseUrl}${ruta}`, { headers: { Authorization: `Bearer ${token}` } });
+  } catch {
+    throw new ErrorApi("No se pudo conectar con el servidor.", 0);
+  }
+
+  if (!respuesta.ok) {
+    const cuerpo = await respuesta.json().catch(() => null);
+    throw new ErrorApi(cuerpo?.error ?? "No se pudo generar el archivo.", respuesta.status);
+  }
+
+  const nombre = /filename="?([^";]+)"?/.exec(respuesta.headers.get("Content-Disposition") ?? "")?.[1] ?? nombreRespaldo;
+  const url = URL.createObjectURL(await respuesta.blob());
+  const enlace = document.createElement("a");
+  enlace.href = url;
+  enlace.download = nombre;
+  enlace.click();
+  URL.revokeObjectURL(url);
+}
+
+export function entregarPedido(token: string, id: number): Promise<Pedido> {
+  return peticion<Pedido>(`/api/entregas/${id}/entregar`, { method: "POST" }, token);
+}
+
+export function recogerPedido(token: string, id: number): Promise<Pedido> {
+  return peticion<Pedido>(`/api/entregas/${id}/recoger`, { method: "POST" }, token);
+}
+
+export function colaEntregas(token: string): Promise<Pedido[]> {
+  return peticion<Pedido[]>("/api/entregas/cola", {}, token);
+}
+
+export function porRecogerEntregas(token: string): Promise<Pedido[]> {
+  return peticion<Pedido[]>("/api/entregas/por-recoger", {}, token);
+}
+
+export interface LineaPedido {
+  id: number;
+  articuloId: number | null;
+  paqueteId: number | null;
+  descripcion: string;
+  cantidad: number;
+  precioUnitario: number;
+  importe: number;
+}
+
+/** Pedido tal como lo devuelve la API en pedidos y entregas. */
+export interface Pedido {
+  id: number;
+  clienteId: number;
+  clienteNombre: string;
+  clienteTelefono: string;
+  fechaHoraEntrega: string;
+  fechaDevolucion: string;
+  direccionEntrega: string;
+  requiereFactura: boolean;
+  subtotal: number;
+  iva: number;
+  cobrosPorDanos: number;
+  total: number;
+  anticipo: number;
+  saldo: number;
+  pagado: boolean;
+  estado: string;
+  entregadoEn: string | null;
+  recogidoEn: string | null;
+  lineas: LineaPedido[];
+}

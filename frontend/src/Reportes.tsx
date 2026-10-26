@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react";
 import {
+  descargarReporte,
   ErrorApi,
   obtenerInventario,
   obtenerPedidosPagados,
@@ -53,6 +54,36 @@ function Pestanita({ activa, onClick, children }: { activa: boolean; onClick: ()
   );
 }
 
+/** Botones para bajar el reporte en Excel o PDF, con los mismos filtros que se ven en pantalla. */
+function Descargas({ base, query = "", token, nombre }: { base: string; query?: string; token: string; nombre: string }) {
+  const [error, setError] = useState<string | null>(null);
+  const [descargando, setDescargando] = useState(false);
+
+  async function bajar(formato: "excel" | "pdf") {
+    setError(null);
+    setDescargando(true);
+    try {
+      await descargarReporte(`${base}/${formato}${query}`, token, `${nombre}.${formato === "excel" ? "xlsx" : "pdf"}`);
+    } catch (err) {
+      setError(err instanceof ErrorApi ? err.message : "No se pudo descargar el archivo.");
+    } finally {
+      setDescargando(false);
+    }
+  }
+
+  return (
+    <div className="descargas">
+      <button type="button" className="boton boton--secundario" disabled={descargando} onClick={() => bajar("excel")}>
+        Descargar Excel
+      </button>
+      <button type="button" className="boton boton--secundario" disabled={descargando} onClick={() => bajar("pdf")}>
+        Descargar PDF
+      </button>
+      {error && <p className="login__error" role="alert">{error}</p>}
+    </div>
+  );
+}
+
 /** Convierte yyyy-MM-dd (campo de fecha del navegador) a dd-MM-yyyy. */
 function aFormatoSistema(fecha: string): string {
   if (!fecha) return "";
@@ -76,6 +107,11 @@ function PedidosPagados({ token }: { token: string }) {
       });
   }, [token, desde, hasta]);
 
+  const parametros = new URLSearchParams();
+  if (desde) parametros.set("desde", aFormatoSistema(desde));
+  if (hasta) parametros.set("hasta", aFormatoSistema(hasta));
+  const consulta = parametros.toString() ? `?${parametros.toString()}` : "";
+
   return (
     <div className="reporte">
       <div className="filtros">
@@ -88,6 +124,8 @@ function PedidosPagados({ token }: { token: string }) {
           <input className="campo__input" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
         </label>
       </div>
+
+      <Descargas base="/api/reportes/pedidos-pagados" query={consulta} token={token} nombre="pedidos-pagados" />
 
       {error && <p className="login__error" role="alert">{error}</p>}
 
@@ -118,6 +156,7 @@ function PorRecoger({ token }: { token: string }) {
 
   return (
     <div className="reporte">
+      <Descargas base="/api/reportes/pendientes-recoger" token={token} nombre="pendientes-recoger" />
       <p className="resumen">{pedidos.length} pedidos con piezas por recoger</p>
       <TablaPedidos pedidos={pedidos} />
     </div>
@@ -139,6 +178,7 @@ function Inventario({ token }: { token: string }) {
 
   return (
     <div className="reporte">
+      <Descargas base="/api/reportes/inventario" token={token} nombre="inventario" />
       <div className="tabla-envoltura">
         <table className="tabla">
           <thead>

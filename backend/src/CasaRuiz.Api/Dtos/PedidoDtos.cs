@@ -59,6 +59,7 @@ public record PedidoResponse(
     DateTimeOffset FechaCreacion,
     int ClienteId,
     string ClienteNombre,
+    string ClienteTelefono,
     [property: JsonConverter(typeof(FechaHoraJsonConverter))] DateTime FechaHoraEntrega,
     [property: JsonConverter(typeof(FechaJsonConverter))] DateOnly FechaDevolucion,
     string DireccionEntrega,

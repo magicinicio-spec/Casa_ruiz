@@ -582,6 +582,7 @@ public class PedidoService(AppDbContext db)
             p.FechaCreacion,
             p.ClienteId,
             p.Cliente.NombreCompleto,
+            p.Cliente.Telefono,
             p.FechaHoraEntrega,
             p.FechaDevolucion,
             p.DireccionEntrega,

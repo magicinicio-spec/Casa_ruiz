@@ -106,7 +106,7 @@ Reportes (lo ven Administrador, Superior, Vendedor y Vendedor + Repartidor):
 - **Pedidos pagados:** pedidos marcados como pagados que no están cancelados, con total. Filtro opcional por fecha de entrega (desde / hasta).
 - **Pedidos por recoger:** pedidos activos ya entregados cuyas piezas todavía no se han recogido.
 - **Inventario:** por artículo, existencia total, en renta (unidades de pedidos activos aún no revisados), disponible (existencia menos en renta) y dados de baja.
-- Formato de exportación (PDF, Excel): **PENDIENTE**. Por ahora se ven en pantalla.
+- Cada reporte se ve en pantalla y se descarga en **Excel** y **PDF**, con los mismos filtros.
 
 ## 10. Usuarios y roles
 
@@ -160,5 +160,4 @@ Roles y permisos:
 ## Pendientes para confirmar
 
 1. Paquetes: qué artículos incluye cada uno y si tienen precio propio. *(Resuelto: son combinaciones de sillas y mesas con precio propio.)*
-2. Formato de exportación de reportes (PDF, Excel o solo pantalla).
 5. Cobros por daño: confirmar si llevan IVA. *(Supuesto actual: no llevan IVA.)*
