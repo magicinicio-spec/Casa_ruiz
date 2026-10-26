@@ -9,7 +9,19 @@ public record DashboardResponse(
     ResumenDia Dia,
     ResumenSemana Semana,
     SituacionActual Situacion,
-    List<ArticuloMasRentado> ArticulosMasRentados);
+    List<ArticuloMasRentado> ArticulosMasRentados,
+    List<DiaSemana> DiasSemana,
+    List<ArticuloOcupacion> Ocupacion);
+
+/// <summary>Un día de la semana: pedidos con entrega ese día (sin cancelados) e ingresos.</summary>
+public record DiaSemana(
+    string Dia,
+    [property: JsonConverter(typeof(FechaJsonConverter))] DateOnly Fecha,
+    int Pedidos,
+    decimal Ingresos);
+
+/// <summary>Piezas de un artículo en renta (pedidos activos sin revisar) y disponibles.</summary>
+public record ArticuloOcupacion(string Descripcion, int EnRenta, int Disponible);
 
 /// <summary>Pedidos con entrega hoy. No incluye cancelados.</summary>
 public record ResumenDia(int PedidosParaHoy, int PendientesDeEntregarHoy);

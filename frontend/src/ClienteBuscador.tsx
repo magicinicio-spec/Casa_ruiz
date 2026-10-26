@@ -21,6 +21,7 @@ export default function ClienteBuscador({ token, clientes, valor, onChange, onCl
   const [abierto, setAbierto] = useState(false);
   const [resaltado, setResaltado] = useState(0);
   const [creando, setCreando] = useState(false);
+  const [cambiando, setCambiando] = useState(false);
   const [nuevo, setNuevo] = useState({ nombreCompleto: "", telefono: "", direccion: "" });
   const [error, setError] = useState<string | null>(null);
   const entrada = useRef<HTMLInputElement>(null);
@@ -38,6 +39,7 @@ export default function ClienteBuscador({ token, clientes, valor, onChange, onCl
     setTexto("");
     setAbierto(false);
     setCreando(false);
+    setCambiando(false);
   }
 
   function teclado(e: KeyboardEvent<HTMLInputElement>) {
@@ -68,6 +70,21 @@ export default function ClienteBuscador({ token, clientes, valor, onChange, onCl
     }
   }
 
+  if (seleccionado && !cambiando) {
+    return (
+      <div className="cliente-tarjeta">
+        <div>
+          <span className="campo__etiqueta">Cliente</span>
+          <p className="cliente-tarjeta__nombre">{seleccionado.nombreCompleto}</p>
+          <p className="texto-caption">{seleccionado.telefono} · {seleccionado.direccion}</p>
+        </div>
+        <button type="button" className="boton boton--secundario boton--chico" onClick={() => setCambiando(true)}>
+          Cambiar
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="buscador-cliente">
       <Campo etiqueta="Cliente">
@@ -78,7 +95,7 @@ export default function ClienteBuscador({ token, clientes, valor, onChange, onCl
           aria-expanded={abierto}
           aria-autocomplete="list"
           autoComplete="off"
-          placeholder={seleccionado ? seleccionado.nombreCompleto : "Escribe nombre o teléfono"}
+          placeholder="Escribe nombre o teléfono"
           value={texto}
           onFocus={() => setAbierto(true)}
           onBlur={() => setTimeout(() => setAbierto(false), 120)}
@@ -90,12 +107,6 @@ export default function ClienteBuscador({ token, clientes, valor, onChange, onCl
           onKeyDown={teclado}
         />
       </Campo>
-
-      {seleccionado && !texto && (
-        <p className="texto-caption buscador-cliente__seleccion">
-          Seleccionado: <strong>{seleccionado.nombreCompleto}</strong> · {seleccionado.telefono}
-        </p>
-      )}
 
       {abierto && !creando && (
         <ul className="buscador-cliente__lista" role="listbox">

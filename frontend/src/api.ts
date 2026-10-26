@@ -91,6 +91,19 @@ export interface ArticuloMasRentado {
   unidades: number;
 }
 
+export interface DiaSemana {
+  dia: string;
+  fecha: string;
+  pedidos: number;
+  ingresos: number;
+}
+
+export interface ArticuloOcupacion {
+  descripcion: string;
+  enRenta: number;
+  disponible: number;
+}
+
 export interface Dashboard {
   fecha: string;
   inicioSemana: string;
@@ -99,6 +112,8 @@ export interface Dashboard {
   semana: ResumenSemana;
   situacion: SituacionActual;
   articulosMasRentados: ArticuloMasRentado[];
+  diasSemana: DiaSemana[];
+  ocupacion: ArticuloOcupacion[];
 }
 
 export function obtenerDashboard(token: string): Promise<Dashboard> {

@@ -63,13 +63,18 @@ function gruposDe(rol: RolUsuario): GrupoMenu[] {
     },
   ];
 
-  return grupos.filter((g) => g.items.length > 0);
+  // "Consulta" va primero: el dashboard es la primera pantalla que se ve.
+  const orden = ["Consulta", "Operación", "Catálogo", "Administración"];
+  return grupos
+    .filter((g) => g.items.length > 0)
+    .sort((x, y) => orden.indexOf(x.titulo) - orden.indexOf(y.titulo));
 }
 
 export default function Inicio({ sesion, onSalir }: Props) {
   const { usuario, token } = { usuario: sesion.usuario, token: sesion.token };
   const grupos = gruposDe(usuario.rol);
-  const [seccion, setSeccion] = useState<Seccion>(grupos[0].items[0].id);
+  const primera = grupos.flatMap((g) => g.items).find((i) => i.id === "dashboard") ?? grupos[0].items[0];
+  const [seccion, setSeccion] = useState<Seccion>(primera.id);
   const puedeOperar = rolesOperacion.includes(usuario.rol);
   const puedeControlar = rolesControl.includes(usuario.rol);
 

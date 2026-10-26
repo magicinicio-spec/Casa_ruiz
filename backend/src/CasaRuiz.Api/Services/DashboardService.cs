@@ -75,6 +75,36 @@ public class DashboardService(AppDbContext db)
             .Take(TopArticulos)
             .ToList();
 
-        return new DashboardResponse(hoy, inicioSemana, finSemana, dia, semana, situacion, masRentados);
+        var nombresDia = new[] { "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom" };
+        var diasSemana = Enumerable.Range(0, 7)
+            .Select(i =>
+            {
+                var fecha = inicioSemana.AddDays(i);
+                var delDia = noCancelados.Where(p => DateOnly.FromDateTime(p.FechaHoraEntrega) == fecha).ToList();
+                return new DiaSemana(nombresDia[i], fecha, delDia.Count, delDia.Sum(p => PedidoService.CalcularTotales(p).Total));
+            })
+            .ToList();
+
+        // En renta: unidades de pedidos activos que todavía no se han revisado.
+        var enRenta = activos
+            .SelectMany(p => p.Lineas)
+            .SelectMany(l => l.Articulos)
+            .Where(a => a.CantidadDevuelta is null)
+            .GroupBy(a => a.ArticuloId)
+            .ToDictionary(g => g.Key, g => g.Sum(a => a.Cantidad));
+
+        var articulos = await db.Articulos.AsNoTracking().ToListAsync(ct);
+        var ocupacion = articulos
+            .Select(a =>
+            {
+                var rentados = enRenta.GetValueOrDefault(a.Id);
+                return new ArticuloOcupacion(a.Descripcion, rentados, a.ExistenciaTotal - rentados);
+            })
+            .Where(o => o.EnRenta > 0)
+            .OrderByDescending(o => o.EnRenta)
+            .Take(TopArticulos)
+            .ToList();
+
+        return new DashboardResponse(hoy, inicioSemana, finSemana, dia, semana, situacion, masRentados, diasSemana, ocupacion);
     }
 }
