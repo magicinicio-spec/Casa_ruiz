@@ -5,7 +5,6 @@ using CasaRuiz.Api.Services;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-using QuestPDF.Drawing;
 
 namespace CasaRuiz.Api.Exportacion;
 
@@ -15,17 +14,6 @@ public class ExportadorReportes(ReportesService reportes)
     private static readonly CultureInfo Mexico = new("es-MX");
     private static readonly string[] EncabezadosPedidos =
         ["Pedido", "Cliente", "Teléfono", "Entrega", "Devolución", "Dirección", "Estado", "Total", "Anticipo", "Saldo", "Pagado"];
-
-    static ExportadorReportes()
-    {
-        // Licencia comunitaria de QuestPDF: uso gratuito para empresas con ingresos menores a 1 M USD.
-        QuestPDF.Settings.License = LicenseType.Community;
-
-        // QuestPDF no usa fuentes del sistema: la fuente se incluye con la aplicación (Inter, licencia OFL).
-        var carpeta = Path.Combine(AppContext.BaseDirectory, "Fuentes");
-        FontManager.RegisterFont(File.OpenRead(Path.Combine(carpeta, "Inter-Regular.ttf")));
-        FontManager.RegisterFont(File.OpenRead(Path.Combine(carpeta, "Inter-SemiBold.ttf")));
-    }
 
     public async Task<TablaReporte> PedidosPagadosAsync(DateOnly? desde, DateOnly? hasta)
     {

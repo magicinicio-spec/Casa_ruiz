@@ -85,6 +85,8 @@ builder.Services.AddControllers()
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+CasaRuiz.Api.Exportacion.ConfiguracionPdf.Configurar();
+
 var app = builder.Build();
 
 // Aplica las migraciones pendientes y crea el primer administrador si no hay usuarios (PostgreSQL en Docker).

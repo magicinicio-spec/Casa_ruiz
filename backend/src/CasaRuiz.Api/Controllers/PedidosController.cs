@@ -1,6 +1,7 @@
 using CasaRuiz.Api.Configuracion;
 using Microsoft.AspNetCore.Authorization;
 using CasaRuiz.Api.Dtos;
+using CasaRuiz.Api.Exportacion;
 using CasaRuiz.Api.Models;
 using CasaRuiz.Api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -28,6 +29,19 @@ public class PedidosController(PedidoService pedidos) : ControllerBase
         }
 
         return Ok(await pedidos.ListarAsync(filtro));
+    }
+
+    /// <summary>Hoja del pedido en PDF tamaño carta A4, para imprimir.</summary>
+    [HttpGet("{id:int}/imprimir")]
+    public async Task<IActionResult> Imprimir(int id)
+    {
+        var pedido = await pedidos.ObtenerAsync(id);
+        if (pedido is null)
+        {
+            return NotFound();
+        }
+
+        return File(ExportadorPedidos.ComoPdf(pedido), "application/pdf", $"pedido-{id}.pdf");
     }
 
     [HttpGet("{id:int}")]
