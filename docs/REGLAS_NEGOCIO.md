@@ -157,7 +157,11 @@ Roles y permisos:
 - Se conservan los **3 respaldos más recientes**.
 - Se guardan en la carpeta `respaldos/` del **disco del servidor**.
 
+## Decisiones confirmadas
+
+- Los cobros por daño no llevan IVA.
+- Casa Ruiz es una empresa pequeña: se usa la licencia comunitaria de QuestPDF (gratuita).
+
 ## Pendientes para confirmar
 
 1. Paquetes: qué artículos incluye cada uno y si tienen precio propio. *(Resuelto: son combinaciones de sillas y mesas con precio propio.)*
-5. Cobros por daño: confirmar si llevan IVA. *(Supuesto actual: no llevan IVA.)*
