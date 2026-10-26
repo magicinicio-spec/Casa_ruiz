@@ -100,3 +100,52 @@ export interface Dashboard {
 export function obtenerDashboard(token: string): Promise<Dashboard> {
   return peticion<Dashboard>("/api/dashboard", {}, token);
 }
+
+export interface ReportePedido {
+  id: number;
+  clienteNombre: string;
+  clienteTelefono: string;
+  fechaHoraEntrega: string;
+  fechaDevolucion: string;
+  direccionEntrega: string;
+  estado: string;
+  total: number;
+  anticipo: number;
+  saldo: number;
+  pagado: boolean;
+  entregadoEn: string | null;
+  recogidoEn: string | null;
+}
+
+export interface ReportePedidosPagados {
+  cantidad: number;
+  totalPagado: number;
+  pedidos: ReportePedido[];
+}
+
+export interface ReporteInventarioArticulo {
+  articuloId: number;
+  descripcion: string;
+  categoria: string;
+  existenciaTotal: number;
+  enRenta: number;
+  disponible: number;
+  dadosDeBaja: number;
+}
+
+/** Fechas en formato dd-MM-yyyy, como el resto del sistema. Vacío significa sin límite. */
+export function obtenerPedidosPagados(token: string, desde: string, hasta: string): Promise<ReportePedidosPagados> {
+  const parametros = new URLSearchParams();
+  if (desde) parametros.set("desde", desde);
+  if (hasta) parametros.set("hasta", hasta);
+  const consulta = parametros.toString() ? `?${parametros.toString()}` : "";
+  return peticion<ReportePedidosPagados>(`/api/reportes/pedidos-pagados${consulta}`, {}, token);
+}
+
+export function obtenerPendientesRecoger(token: string): Promise<ReportePedido[]> {
+  return peticion<ReportePedido[]>("/api/reportes/pendientes-recoger", {}, token);
+}
+
+export function obtenerInventario(token: string): Promise<ReporteInventarioArticulo[]> {
+  return peticion<ReporteInventarioArticulo[]>("/api/reportes/inventario", {}, token);
+}

@@ -5,7 +5,7 @@ interface Props {
   token: string;
 }
 
-const formatoDinero = new Intl.NumberFormat("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+export const formatoDinero = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" });
 
 export default function Dashboard({ token }: Props) {
   const [datos, setDatos] = useState<DatosDashboard | null>(null);

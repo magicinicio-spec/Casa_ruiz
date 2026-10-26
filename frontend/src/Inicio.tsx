@@ -1,5 +1,7 @@
 import type { Sesion } from "./api";
 import Dashboard from "./Dashboard";
+import Reportes from "./Reportes";
+import { useState } from "react";
 
 interface Props {
   sesion: Sesion;
@@ -20,6 +22,7 @@ const rolesConDashboard: Sesion["usuario"]["rol"][] = ["Administrador", "Superio
 export default function Inicio({ sesion, onSalir }: Props) {
   const { usuario } = sesion;
   const verDashboard = rolesConDashboard.includes(usuario.rol);
+  const [vista, setVista] = useState<"dashboard" | "reportes">("dashboard");
 
   return (
     <div className="pagina">
@@ -38,8 +41,25 @@ export default function Inicio({ sesion, onSalir }: Props) {
       <main className="contenido">
         {verDashboard ? (
           <>
-            <h1 className="titulo-heading-lg">Dashboard</h1>
-            <Dashboard token={sesion.token} />
+            <nav className="pestanas" aria-label="Secciones">
+              <button
+                type="button"
+                className={`boton pestanita${vista === "dashboard" ? " pestanita--activa" : ""}`}
+                aria-pressed={vista === "dashboard"}
+                onClick={() => setVista("dashboard")}
+              >
+                Dashboard
+              </button>
+              <button
+                type="button"
+                className={`boton pestanita${vista === "reportes" ? " pestanita--activa" : ""}`}
+                aria-pressed={vista === "reportes"}
+                onClick={() => setVista("reportes")}
+              >
+                Reportes
+              </button>
+            </nav>
+            {vista === "dashboard" ? <Dashboard token={sesion.token} /> : <Reportes token={sesion.token} />}
           </>
         ) : (
           <>

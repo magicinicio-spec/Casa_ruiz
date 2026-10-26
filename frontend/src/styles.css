@@ -324,3 +324,80 @@ p {
   font-weight: 500;
   color: var(--color-graphite);
 }
+
+/* Pestañas y reportes */
+.pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pestanita {
+  color: var(--color-twilight);
+  border: 1px solid var(--color-mist);
+  background: var(--color-paper);
+}
+
+.pestanita--activa {
+  color: var(--color-signal-blue);
+  border-color: var(--color-signal-blue);
+}
+
+.reportes,
+.reporte {
+  display: grid;
+  gap: 16px;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.filtros .campo {
+  min-width: 180px;
+}
+
+.resumen {
+  color: var(--color-graphite);
+  font-weight: 500;
+}
+
+.bloque {
+  display: block;
+}
+
+/* Tablas: en teléfono se desplazan dentro de su propio recuadro, no en la página. */
+.tabla-envoltura {
+  overflow-x: auto;
+  background: var(--color-paper);
+  border: 1px solid var(--color-mist);
+  border-radius: var(--radius-cards);
+  box-shadow: var(--shadow-card);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.tabla th,
+.tabla td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-mist);
+  vertical-align: top;
+}
+
+.tabla th {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-ash);
+}
+
+.numero {
+  text-align: right;
+  white-space: nowrap;
+}
