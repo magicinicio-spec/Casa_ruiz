@@ -15,8 +15,8 @@ export function GraficaDias({ dias }: { dias: { dia: string; pedidos: number; in
     <svg viewBox={`0 0 ${ancho} ${alto}`} className="grafica" role="img" aria-label="Pedidos por día de la semana">
       <defs>
         <linearGradient id="degradado-barra" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ededed" />
-          <stop offset="100%" stopColor="#6b62f2" stopOpacity="0.55" />
+          <stop offset="0%" className="grafica__stop-inicio" />
+          <stop offset="100%" className="grafica__stop-fin" stopOpacity="0.55" />
         </linearGradient>
       </defs>
 
@@ -54,7 +54,7 @@ export function GraficaDias({ dias }: { dias: { dia: string; pedidos: number; in
   );
 }
 
-export function Dona({ segmentos }: { segmentos: { etiqueta: string; valor: number; color: string }[] }) {
+export function Dona({ segmentos }: { segmentos: { etiqueta: string; valor: number; tono: 1 | 2 | 3 | 4 }[] }) {
   const total = segmentos.reduce((suma, s) => suma + s.valor, 0);
   const radio = 80;
   const longitud = 2 * Math.PI * radio;
@@ -83,13 +83,12 @@ export function Dona({ segmentos }: { segmentos: { etiqueta: string; valor: numb
                 cy="110"
                 r={radio}
                 fill="none"
-                stroke={s.color}
                 strokeWidth={22}
                 strokeLinecap="round"
                 strokeDasharray={montado ? `${Math.max(largo - 6, 0)} ${longitud}` : `0 ${longitud}`}
                 strokeDashoffset={desplazamiento}
                 transform="rotate(-90 110 110)"
-                className="dona__segmento"
+                className={`dona__segmento dona__segmento--${s.tono}`}
               >
                 <title>{`${s.etiqueta}: ${s.valor}`}</title>
               </circle>

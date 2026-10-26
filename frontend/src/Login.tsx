@@ -34,6 +34,7 @@ export default function Login({ onEntrar }: Props) {
         </section>
 
         <section className="panel login__tarjeta">
+          <img src="/logo.png" alt="Casa Ruiz" className="login__logo" />
           <h1 className="titulo-subheading">Iniciar sesión</h1>
           <p className="texto-lead">Usa tu usuario y contraseña.</p>
 

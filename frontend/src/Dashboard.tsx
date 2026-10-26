@@ -79,10 +79,10 @@ export default function Dashboard({ token }: Props) {
           <div className="dona-fila">
             <Dona
               segmentos={[
-                { etiqueta: "Por entregar", valor: s.pendientesDeEntregar, color: "#ededed" },
-                { etiqueta: "Por recoger", valor: s.porRecoger, color: "#b2b2b2" },
-                { etiqueta: "Por revisar", valor: s.porRevisar, color: "#686868" },
-                { etiqueta: "Cerrados", valor: s.cerrados, color: "#3a3a3a" },
+                { etiqueta: "Por entregar", valor: s.pendientesDeEntregar, tono: 1 },
+                { etiqueta: "Por recoger", valor: s.porRecoger, tono: 2 },
+                { etiqueta: "Por revisar", valor: s.porRevisar, tono: 3 },
+                { etiqueta: "Cerrados", valor: s.cerrados, tono: 4 },
               ]}
             />
             <ul className="leyenda">

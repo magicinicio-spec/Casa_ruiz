@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { RolUsuario, Sesion } from "./api";
 import Clientes from "./Clientes";
 import Dashboard from "./Dashboard";
@@ -75,12 +75,30 @@ export default function Inicio({ sesion, onSalir }: Props) {
   const grupos = gruposDe(usuario.rol);
   const primera = grupos.flatMap((g) => g.items).find((i) => i.id === "dashboard") ?? grupos[0].items[0];
   const [seccion, setSeccion] = useState<Seccion>(primera.id);
+  const [tema, setTema] = useState<"oscuro" | "claro">(() => {
+    try {
+      return localStorage.getItem("casaRuiz.tema") === "claro" ? "claro" : "oscuro";
+    } catch {
+      return "oscuro";
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.tema = tema;
+    try {
+      localStorage.setItem("casaRuiz.tema", tema);
+    } catch {
+      // Sin almacenamiento, el tema vuelve a oscuro al recargar.
+    }
+  }, [tema]);
   const puedeOperar = rolesOperacion.includes(usuario.rol);
   const puedeControlar = rolesControl.includes(usuario.rol);
 
   return (
     <div className="pagina">
       <Menu
+        tema={tema}
+        onTema={() => setTema((t) => (t === "oscuro" ? "claro" : "oscuro"))}
         grupos={grupos}
         seccion={seccion}
         onSeccion={setSeccion}

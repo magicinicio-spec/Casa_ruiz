@@ -13,6 +13,8 @@ export interface GrupoMenu {
 }
 
 interface Props {
+  tema: "oscuro" | "claro";
+  onTema: () => void;
   grupos: GrupoMenu[];
   seccion: Seccion;
   onSeccion: (s: Seccion) => void;
@@ -21,7 +23,7 @@ interface Props {
   onSalir: () => void;
 }
 
-export default function MenuPrincipal({ grupos, seccion, onSeccion, nombreUsuario, rol, onSalir }: Props) {
+export default function MenuPrincipal({ tema, onTema, grupos, seccion, onSeccion, nombreUsuario, rol, onSalir }: Props) {
   const [desplegado, setDesplegado] = useState<string | null>(null);
   const [hojaAbierta, setHojaAbierta] = useState(false);
   const [menuUsuario, setMenuUsuario] = useState(false);
@@ -89,7 +91,10 @@ export default function MenuPrincipal({ grupos, seccion, onSeccion, nombreUsuari
   return (
     <div className="menu" ref={barra}>
       <div className="menu__barra">
-        <span className="menu__marca">Casa Ruiz</span>
+        <span className="menu__marca menu__marca-texto">
+          <img src="/logo.png" alt="" className="menu__logo" />
+          Casa Ruiz
+        </span>
 
         <nav ref={navegacion} className="menu__nav" aria-label="Secciones">
           {grupos.map((grupo) =>
@@ -139,6 +144,16 @@ export default function MenuPrincipal({ grupos, seccion, onSeccion, nombreUsuari
             <span className="menu__indicador" style={{ transform: `translateX(${indicador.left}px)`, width: indicador.width }} />
           )}
         </nav>
+
+        <button
+          type="button"
+          className="menu__tema"
+          aria-label={tema === "oscuro" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+          title={tema === "oscuro" ? "Tema claro" : "Tema oscuro"}
+          onClick={onTema}
+        >
+          {tema === "oscuro" ? "☀" : "☾"}
+        </button>
 
         <div className="menu__usuario">
           <button
