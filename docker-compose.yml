@@ -28,10 +28,16 @@ services:
       Admin__NombreUsuario: ${ADMIN_USUARIO:?Define ADMIN_USUARIO en el archivo .env}
       Admin__Password: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD en el archivo .env}
       Admin__NombreCompleto: ${ADMIN_NOMBRE:-Administrador}
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - api
     ports:
       # API_IP es la IP del servidor en la red de la oficina. Docker publica los puertos
       # saltándose UFW, por eso se amarra a esa IP y no a todas las interfaces.
-      - "${API_IP:-0.0.0.0}:8080:8080"
+      - "${API_IP:-0.0.0.0}:80:80"
 
   respaldo:
     image: postgres:17

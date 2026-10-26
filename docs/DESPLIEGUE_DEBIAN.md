@@ -77,15 +77,26 @@ docker compose logs -f api
 
 La primera vez tarda unos minutos porque construye la imagen. Al iniciar, la API aplica las migraciones a la base de datos automáticamente.
 
-Prueba desde cualquier equipo de la oficina:
+Abre el sistema desde cualquier equipo de la oficina en `http://192.168.1.10` (la IP de `API_IP`).
+
+Prueba la API desde la misma dirección:
 
 ```bash
-curl -i -X POST http://192.168.1.10:8080/api/auth/login \
+curl -i -X POST http://192.168.1.10/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"nombreUsuario":"admin","password":"TU_ADMIN_PASSWORD"}'
 ```
 
 Debe responder `200` con un `token`. Sin sesión, las demás rutas responden `401`.
+
+Servicios que levanta Compose:
+
+| Servicio | Qué hace |
+|---|---|
+| `web` | Nginx: sirve la pantalla de React y reenvía `/api` a la API. Es lo único que se publica (puerto 80). |
+| `api` | API en C#. Solo es accesible desde `web`, dentro de la red de Docker. |
+| `db` | PostgreSQL. No se publica fuera de Docker. |
+| `respaldo` | Respaldo semanal de la base de datos. |
 
 ## 6. Firewall
 
@@ -95,13 +106,13 @@ Como Docker publica los puertos saltándose UFW, el sistema queda amarrado a la 
 sudo apt-get install -y ufw
 sudo ufw default deny incoming
 sudo ufw allow OpenSSH
-sudo ufw allow from 192.168.1.0/24 to any port 8080 proto tcp
+sudo ufw allow from 192.168.1.0/24 to any port 80 proto tcp
 sudo ufw enable
 ```
 
 Ajusta `192.168.1.0/24` a la red real de la oficina.
 
-**No** reenvíes el puerto 8080 desde el router hacia internet.
+**No** reenvíes el puerto 80 desde el router hacia internet.
 
 ## 7. Actualizar a una versión nueva
 
