@@ -57,3 +57,46 @@ export function iniciarSesion(nombreUsuario: string, password: string): Promise<
 export function usuarioActual(token: string): Promise<Usuario> {
   return peticion<Usuario>("/api/auth/yo", {}, token);
 }
+
+export interface ResumenDia {
+  pedidosParaHoy: number;
+  pendientesDeEntregarHoy: number;
+}
+
+export interface ResumenSemana {
+  total: number;
+  pendientesDeEntregar: number;
+  porRecoger: number;
+  porRevisar: number;
+  cerrados: number;
+  cancelados: number;
+  ingresos: number;
+}
+
+export interface SituacionActual {
+  colaEntrega: number;
+  porRecoger: number;
+  proximosSieteDias: number;
+  conDanosSinResolver: number;
+  saldoPorCobrar: number;
+}
+
+export interface ArticuloMasRentado {
+  articuloId: number;
+  descripcion: string;
+  unidades: number;
+}
+
+export interface Dashboard {
+  fecha: string;
+  inicioSemana: string;
+  finSemana: string;
+  dia: ResumenDia;
+  semana: ResumenSemana;
+  situacion: SituacionActual;
+  articulosMasRentados: ArticuloMasRentado[];
+}
+
+export function obtenerDashboard(token: string): Promise<Dashboard> {
+  return peticion<Dashboard>("/api/dashboard", {}, token);
+}

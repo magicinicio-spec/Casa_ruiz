@@ -231,3 +231,96 @@ p {
     padding: 24px;
   }
 }
+
+/* Dashboard */
+.dashboard {
+  display: grid;
+  gap: 24px;
+}
+
+.tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.tarjeta {
+  background: var(--color-paper);
+  border: 1px solid var(--color-mist);
+  border-radius: var(--radius-cards);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.tarjeta__titulo {
+  margin: 0;
+  color: var(--color-ash);
+}
+
+.titulo-subheading {
+  font-family: var(--font-ui);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--color-graphite);
+  margin: 0;
+}
+
+.cifra {
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--color-graphite);
+  margin: 0;
+}
+
+.datos {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.dato {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+  border-top: 1px solid var(--color-mist);
+  padding-top: 8px;
+}
+
+.dato dt {
+  color: var(--color-ash);
+}
+
+.dato dd {
+  margin: 0;
+  color: var(--color-charcoal);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ranking {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.ranking__fila {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--color-mist);
+  padding-top: 8px;
+}
+
+.ranking__cifra {
+  font-weight: 500;
+  color: var(--color-graphite);
+}

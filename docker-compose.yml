@@ -21,6 +21,8 @@ services:
       db:
         condition: service_healthy
     environment:
+      # Zona horaria del servidor: define qué significa "hoy" y "esta semana" en el dashboard.
+      TZ: ${ZONA_HORARIA:?Define ZONA_HORARIA en el archivo .env}
       ConnectionStrings__Default: "Host=db;Port=5432;Database=casa_ruiz;Username=casa_ruiz;Password=${POSTGRES_PASSWORD}"
       # Clave para firmar las sesiones (mínimo 32 caracteres).
       Jwt__Key: ${JWT_KEY:?Define JWT_KEY en el archivo .env}

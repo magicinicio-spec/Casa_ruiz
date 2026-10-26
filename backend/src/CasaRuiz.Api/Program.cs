@@ -68,6 +68,7 @@ builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<PedidoService>();
+builder.Services.AddScoped<DashboardService>();
 
 // Orígenes permitidos para la pantalla de React, por ejemplo http://192.168.1.10:3000.
 var origenes = builder.Configuration.GetSection("Cors:OrigenesPermitidos").Get<string[]>() ?? [];

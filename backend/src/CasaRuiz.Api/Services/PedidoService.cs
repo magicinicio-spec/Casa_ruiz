@@ -559,7 +559,8 @@ public class PedidoService(AppDbContext db)
             .ToList();
     }
 
-    private static PedidoResponse ToResponse(Pedido p)
+    /// <summary>Subtotal, IVA, cobros por daño y total de un pedido. Es la única fuente de estos cálculos.</summary>
+    public static (decimal Subtotal, decimal Iva, decimal Cobros, decimal Total) CalcularTotales(Pedido p)
     {
         var subtotal = p.Lineas.Sum(l => l.Cantidad * l.PrecioUnitario);
         var iva = p.RequiereFactura ? Math.Round(subtotal * TasaIva, 2) : 0m;
@@ -568,7 +569,13 @@ public class PedidoService(AppDbContext db)
             .SelectMany(a => a.Resoluciones)
             .Where(r => r.Tipo == TipoResolucionDano.Cobrado)
             .Sum(r => r.Monto ?? 0m);
-        var total = subtotal + iva + cobros;
+
+        return (subtotal, iva, cobros, subtotal + iva + cobros);
+    }
+
+    private static PedidoResponse ToResponse(Pedido p)
+    {
+        var (subtotal, iva, cobros, total) = CalcularTotales(p);
 
         return new PedidoResponse(
             p.Id,

@@ -92,10 +92,16 @@ Al revisar un pedido entregado se pueden consultar:
 
 ## 9. Dashboard y reportes
 
-- **PENDIENTE**: confirmar las métricas del dashboard.
-  - Propuesta: rentas de hoy, pedidos de los próximos 7 días, entregas pendientes, pedidos pendientes de recoger, piezas rentadas vs. disponibles, ingresos del mes.
-- **PENDIENTE**: confirmar los reportes y su formato (pantalla, PDF o Excel).
-  - Propuesta: pedidos por periodo, ingresos por periodo, artículos más rentados, faltantes/dañados, clientes.
+Dashboard (solo información de pedidos). Lo ven Administrador, Superior, Vendedor y Vendedor + Repartidor.
+
+- **Hoy:** pedidos con entrega hoy, y cuántos faltan por entregar.
+- **Esta semana** (lunes a domingo): total de pedidos (sin cancelados), pendientes de entregar, por recoger, por revisar, cerrados, cancelados e ingresos (total de los pedidos, con IVA y cobros por daño).
+- **Situación actual** (sin importar la fecha): cola de entrega, por recoger, próximos 7 días (incluye hoy), con daños sin resolver y saldo por cobrar.
+- **Artículos más rentados** de la semana: los 5 con más unidades.
+- "Hoy" y la semana se calculan con la zona horaria del servidor.
+- El saldo por cobrar es el total menos el anticipo de los pedidos activos. Si el pedido está marcado como pagado, el saldo es cero.
+
+Reportes: **PENDIENTE** de definir (lista y formato).
 
 ## 10. Usuarios y roles
 
@@ -149,7 +155,6 @@ Roles y permisos:
 ## Pendientes para confirmar
 
 1. Paquetes: qué artículos incluye cada uno y si tienen precio propio. *(Resuelto: son combinaciones de sillas y mesas con precio propio.)*
-2. Dashboard: métricas definitivas.
-3. Reportes: lista definitiva y formato.
+2. Reportes: lista definitiva y formato.
 4. Moneda y zona horaria del servidor (para el respaldo semanal).
 5. Cobros por daño: confirmar si llevan IVA. *(Supuesto actual: no llevan IVA.)*

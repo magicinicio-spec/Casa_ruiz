@@ -15,6 +15,9 @@ public static class Permisos
     /// <summary>Revisión de devoluciones, resolución de daños y cierre de pedidos.</summary>
     public const string Control = "Administrador,Superior";
 
+    /// <summary>Dashboard con información de pedidos.</summary>
+    public const string Dashboard = Operacion;
+
     /// <summary>Cola de entregas, entregar y recoger.</summary>
     public const string Entregas = "Administrador,Superior,Repartidor,VendedorRepartidor";
 }
