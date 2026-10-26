@@ -80,6 +80,21 @@ public class PedidosController(PedidoService pedidos) : ControllerBase
         }
     }
 
+    [HttpPost("{id:int}/danos")]
+    public async Task<ActionResult<PedidoResponse>> ResolverDano(int id, ResolucionDanoRequest request)
+    {
+        try
+        {
+            var pedido = await pedidos.RegistrarResolucionDanoAsync(id, request);
+
+            return pedido is null ? NotFound() : Ok(pedido);
+        }
+        catch (ReglaNegocioException ex)
+        {
+            return StatusCode(ex.Codigo, new { error = ex.Message });
+        }
+    }
+
     [HttpPost("{id:int}/cerrar")]
     public async Task<ActionResult<PedidoResponse>> Close(int id)
     {

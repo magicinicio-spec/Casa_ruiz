@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using CasaRuiz.Api.Models;
 
 namespace CasaRuiz.Api.Dtos;
 
@@ -34,7 +35,24 @@ public record ArticuloPedidoResponse(
     int Cantidad,
     int? CantidadDevuelta,
     int CantidadDaniada,
-    int? Faltante);
+    int? Faltante,
+    int DanosSinResolver,
+    List<ResolucionDanoResponse> Resoluciones);
+
+public record ResolucionDanoRequest(
+    [Range(1, int.MaxValue)] int PedidoArticuloId,
+    TipoResolucionDano Tipo,
+    [Range(1, int.MaxValue)] int Cantidad,
+    [MaxLength(300)] string? Motivo,
+    [Range(0.01, 999999)] decimal? Monto);
+
+public record ResolucionDanoResponse(
+    int Id,
+    TipoResolucionDano Tipo,
+    int Cantidad,
+    string? Motivo,
+    decimal? Monto,
+    DateTimeOffset RegistradoEn);
 
 public record PedidoResponse(
     int Id,
@@ -48,6 +66,7 @@ public record PedidoResponse(
     bool RequiereFactura,
     decimal Subtotal,
     decimal Iva,
+    decimal CobrosPorDanos,
     decimal Total,
     decimal Anticipo,
     decimal Saldo,

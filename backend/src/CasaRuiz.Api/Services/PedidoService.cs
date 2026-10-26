@@ -27,6 +27,7 @@ public class PedidoService(AppDbContext db)
         var pedido = await db.Pedidos
             .Include(p => p.Lineas)
                 .ThenInclude(l => l.Articulos)
+                .ThenInclude(a => a.Resoluciones)
             .FirstOrDefaultAsync(p => p.Id == id, ct);
 
         if (pedido is null)
@@ -55,6 +56,7 @@ public class PedidoService(AppDbContext db)
         var pedido = await db.Pedidos
             .Include(p => p.Lineas)
                 .ThenInclude(l => l.Articulos)
+                .ThenInclude(a => a.Resoluciones)
             .FirstOrDefaultAsync(p => p.Id == id, ct);
 
         if (pedido is null)
@@ -145,6 +147,7 @@ public class PedidoService(AppDbContext db)
         var pedido = await db.Pedidos
             .Include(p => p.Lineas)
                 .ThenInclude(l => l.Articulos)
+                .ThenInclude(a => a.Resoluciones)
             .FirstOrDefaultAsync(p => p.Id == id, ct);
 
         if (pedido is null)
@@ -173,6 +176,13 @@ public class PedidoService(AppDbContext db)
             if (!items.TryGetValue(entrada.PedidoArticuloId, out var item))
             {
                 throw new ReglaNegocioException($"El artículo de pedido {entrada.PedidoArticuloId} no pertenece a este pedido.");
+            }
+
+            if (item.Resoluciones.Count > 0)
+            {
+                throw new ReglaNegocioException(
+                    $"No se puede cambiar la revisión de {item.Descripcion} porque ya tiene daños resueltos.",
+                    StatusCodes.Status409Conflict);
             }
 
             if (entrada.CantidadDevuelta + entrada.CantidadDaniada > item.Cantidad)
@@ -213,6 +223,7 @@ public class PedidoService(AppDbContext db)
         var pedido = await db.Pedidos
             .Include(p => p.Lineas)
                 .ThenInclude(l => l.Articulos)
+                .ThenInclude(a => a.Resoluciones)
             .FirstOrDefaultAsync(p => p.Id == id, ct);
 
         if (pedido is null)
@@ -242,9 +253,9 @@ public class PedidoService(AppDbContext db)
             throw new ReglaNegocioException("No se puede cerrar: hay piezas faltantes.", StatusCodes.Status409Conflict);
         }
 
-        if (articulos.Any(a => a.CantidadDaniada > 0))
+        if (articulos.Any(a => a.CantidadDaniada > a.Resoluciones.Sum(r => r.Cantidad)))
         {
-            throw new ReglaNegocioException("No se puede cerrar: hay piezas dañadas.", StatusCodes.Status409Conflict);
+            throw new ReglaNegocioException("No se puede cerrar: hay piezas dañadas sin resolver.", StatusCodes.Status409Conflict);
         }
 
         pedido.Estado = EstadoPedido.Cerrado;
@@ -299,11 +310,83 @@ public class PedidoService(AppDbContext db)
         return pedidos.Select(ToResponse).ToList();
     }
 
+    /// <summary>
+    /// Resuelve piezas dañadas de un artículo: reparadas (regresan a la existencia),
+    /// dadas de baja (salen del inventario) o cobradas al cliente (el monto se suma al total).
+    /// </summary>
+    public async Task<PedidoResponse?> RegistrarResolucionDanoAsync(int id, ResolucionDanoRequest request, CancellationToken ct = default)
+    {
+        var pedido = await db.Pedidos
+            .Include(p => p.Lineas)
+                .ThenInclude(l => l.Articulos)
+                .ThenInclude(a => a.Resoluciones)
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+
+        if (pedido is null)
+        {
+            return null;
+        }
+
+        if (pedido.Estado != EstadoPedido.Activo)
+        {
+            throw new ReglaNegocioException("Solo se pueden resolver daños de un pedido activo.", StatusCodes.Status409Conflict);
+        }
+
+        var item = pedido.Lineas.SelectMany(l => l.Articulos).FirstOrDefault(a => a.Id == request.PedidoArticuloId)
+            ?? throw new ReglaNegocioException($"El artículo de pedido {request.PedidoArticuloId} no pertenece a este pedido.");
+
+        if (item.CantidadDevuelta is null)
+        {
+            throw new ReglaNegocioException("Primero registra la revisión de este artículo.", StatusCodes.Status409Conflict);
+        }
+
+        if (request.Tipo == TipoResolucionDano.DadoDeBaja && string.IsNullOrWhiteSpace(request.Motivo))
+        {
+            throw new ReglaNegocioException("Indica el motivo de la baja.");
+        }
+
+        if (request.Tipo == TipoResolucionDano.Cobrado && request.Monto is null)
+        {
+            throw new ReglaNegocioException("Indica el monto a cobrar por el daño.");
+        }
+
+        if (request.Tipo != TipoResolucionDano.Cobrado && request.Monto is not null)
+        {
+            throw new ReglaNegocioException("El monto solo aplica al cobro por daño.");
+        }
+
+        var pendientes = item.CantidadDaniada - item.Resoluciones.Sum(r => r.Cantidad);
+        if (request.Cantidad > pendientes)
+        {
+            throw new ReglaNegocioException($"Solo quedan {pendientes} piezas dañadas por resolver en {item.Descripcion}.");
+        }
+
+        if (request.Tipo == TipoResolucionDano.Reparado)
+        {
+            var articulo = await db.Articulos.FindAsync([item.ArticuloId], ct);
+            articulo!.ExistenciaTotal += request.Cantidad;
+        }
+
+        item.Resoluciones.Add(new ResolucionDano
+        {
+            Tipo = request.Tipo,
+            Cantidad = request.Cantidad,
+            Motivo = request.Motivo?.Trim(),
+            Monto = request.Tipo == TipoResolucionDano.Cobrado ? request.Monto : null,
+            RegistradoEn = DateTimeOffset.UtcNow,
+        });
+
+        await db.SaveChangesAsync(ct);
+
+        return await ObtenerAsync(id, ct);
+    }
+
     private IQueryable<Pedido> Consulta() =>
         db.Pedidos
             .Include(p => p.Cliente)
             .Include(p => p.Lineas)
-                .ThenInclude(l => l.Articulos);
+                .ThenInclude(l => l.Articulos)
+                .ThenInclude(a => a.Resoluciones);
 
     private static bool TieneRevision(Pedido pedido) =>
         pedido.Lineas.SelectMany(l => l.Articulos).Any(a => a.CantidadDevuelta is not null);
@@ -480,7 +563,12 @@ public class PedidoService(AppDbContext db)
     {
         var subtotal = p.Lineas.Sum(l => l.Cantidad * l.PrecioUnitario);
         var iva = p.RequiereFactura ? Math.Round(subtotal * TasaIva, 2) : 0m;
-        var total = subtotal + iva;
+        var cobros = p.Lineas
+            .SelectMany(l => l.Articulos)
+            .SelectMany(a => a.Resoluciones)
+            .Where(r => r.Tipo == TipoResolucionDano.Cobrado)
+            .Sum(r => r.Monto ?? 0m);
+        var total = subtotal + iva + cobros;
 
         return new PedidoResponse(
             p.Id,
@@ -494,6 +582,7 @@ public class PedidoService(AppDbContext db)
             p.RequiereFactura,
             subtotal,
             iva,
+            cobros,
             total,
             p.Anticipo,
             total - p.Anticipo,
@@ -519,7 +608,11 @@ public class PedidoService(AppDbContext db)
                             a.Cantidad,
                             a.CantidadDevuelta,
                             a.CantidadDaniada,
-                            a.CantidadDevuelta is int devuelta ? a.Cantidad - devuelta - a.CantidadDaniada : null))
+                            a.CantidadDevuelta is int devuelta ? a.Cantidad - devuelta - a.CantidadDaniada : null,
+                            a.CantidadDaniada - a.Resoluciones.Sum(r => r.Cantidad),
+                            a.Resoluciones
+                                .Select(r => new ResolucionDanoResponse(r.Id, r.Tipo, r.Cantidad, r.Motivo, r.Monto, r.RegistradoEn))
+                                .ToList()))
                         .ToList()))
                 .ToList());
     }

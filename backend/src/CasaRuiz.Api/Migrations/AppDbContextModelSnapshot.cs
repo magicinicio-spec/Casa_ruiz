@@ -284,6 +284,48 @@ namespace CasaRuiz.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CasaRuiz.Api.Models.ResolucionDano", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("Monto")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<string>("Motivo")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("PedidoArticuloId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("RegistradoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PedidoArticuloId");
+
+                    b.ToTable("resoluciones_dano", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_resoluciones_dano_cantidad_positiva", "\"Cantidad\" > 0");
+
+                            t.HasCheckConstraint("ck_resoluciones_dano_monto_positivo", "\"Monto\" IS NULL OR \"Monto\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("CasaRuiz.Api.Models.PaqueteArticulo", b =>
                 {
                     b.HasOne("CasaRuiz.Api.Models.Articulo", "Articulo")
@@ -350,6 +392,17 @@ namespace CasaRuiz.Api.Migrations
                     b.Navigation("Pedido");
                 });
 
+            modelBuilder.Entity("CasaRuiz.Api.Models.ResolucionDano", b =>
+                {
+                    b.HasOne("CasaRuiz.Api.Models.PedidoArticulo", "PedidoArticulo")
+                        .WithMany("Resoluciones")
+                        .HasForeignKey("PedidoArticuloId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PedidoArticulo");
+                });
+
             modelBuilder.Entity("CasaRuiz.Api.Models.Paquete", b =>
                 {
                     b.Navigation("Componentes");
@@ -358,6 +411,11 @@ namespace CasaRuiz.Api.Migrations
             modelBuilder.Entity("CasaRuiz.Api.Models.Pedido", b =>
                 {
                     b.Navigation("Lineas");
+                });
+
+            modelBuilder.Entity("CasaRuiz.Api.Models.PedidoArticulo", b =>
+                {
+                    b.Navigation("Resoluciones");
                 });
 
             modelBuilder.Entity("CasaRuiz.Api.Models.PedidoLinea", b =>

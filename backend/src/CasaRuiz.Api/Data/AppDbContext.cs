@@ -19,6 +19,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<PedidoArticulo> PedidoArticulos => Set<PedidoArticulo>();
 
+    public DbSet<ResolucionDano> ResolucionesDano => Set<ResolucionDano>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Articulo>(entity =>
@@ -119,6 +121,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasOne(a => a.PedidoLinea)
                 .WithMany(l => l.Articulos)
                 .HasForeignKey(a => a.PedidoLineaId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ResolucionDano>(entity =>
+        {
+            entity.ToTable("resoluciones_dano", t =>
+            {
+                t.HasCheckConstraint("ck_resoluciones_dano_cantidad_positiva", "\"Cantidad\" > 0");
+                t.HasCheckConstraint("ck_resoluciones_dano_monto_positivo",
+                    "\"Monto\" IS NULL OR \"Monto\" > 0");
+            });
+            entity.Property(r => r.Tipo).HasConversion<string>().HasMaxLength(20);
+            entity.Property(r => r.Motivo).HasMaxLength(300);
+            entity.Property(r => r.Monto).HasPrecision(12, 2);
+            entity.Property(r => r.RegistradoEn);
+            entity.HasOne(r => r.PedidoArticulo)
+                .WithMany(a => a.Resoluciones)
+                .HasForeignKey(r => r.PedidoArticuloId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

@@ -23,4 +23,6 @@ public class PedidoArticulo
 
     /// <summary>Unidades que regresaron dañadas.</summary>
     public int CantidadDaniada { get; set; }
+
+    public List<ResolucionDano> Resoluciones { get; set; } = [];
 }
