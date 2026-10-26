@@ -1,3 +1,5 @@
+import { notificar } from "./Notificaciones";
+import { Cargando } from "./Cargando";
 import { useEffect, useState } from "react";
 import { type Pedido, ErrorApi } from "./api";
 import { formatoDinero } from "./Dashboard";
@@ -72,6 +74,7 @@ export default function Pedidos({ token, puedeOperar, puedeControlar }: Props) {
   function guardado(resultado: PedidoGuardado) {
     setAvisos(resultado.advertencias);
     setExito(`Pedido #${resultado.pedido.id} guardado.`);
+      notificar(`Pedido #${resultado.pedido.id} guardado.`);
     setVista({ modo: "detalle", id: resultado.pedido.id });
     cargarLista();
   }
@@ -152,7 +155,7 @@ export default function Pedidos({ token, puedeOperar, puedeControlar }: Props) {
       </nav>
 
       {error && <Aviso>{error}</Aviso>}
-      {!pedidos && !error && <Vacio>Cargando…</Vacio>}
+      {!pedidos && !error && <Cargando />}
       {pedidos && pedidos.length === 0 && <Vacio>No hay pedidos en esta lista.</Vacio>}
 
       {pedidos && pedidos.length > 0 && (

@@ -1,7 +1,9 @@
+import { notificar } from "./Notificaciones";
+import { Cargando } from "./Cargando";
 import { useEffect, useState } from "react";
 import { type Pedido, descargarReporte, ErrorApi } from "./api";
 import { formatoDinero } from "./Dashboard";
-import { Aviso, Campo, Vacio } from "./ui";
+import { Aviso, Campo } from "./ui";
 import {
   cancelarPedido,
   cerrarPedido,
@@ -56,6 +58,7 @@ export default function PedidoDetalle({ token, id, puedeOperar, puedeControlar, 
     try {
       setPedido(await accion());
       setExito(mensajeOk);
+      notificar(mensajeOk);
       onCambio();
     } catch (err) {
       setError(err instanceof ErrorApi ? err.message : "No se pudo completar la acción.");
@@ -65,7 +68,7 @@ export default function PedidoDetalle({ token, id, puedeOperar, puedeControlar, 
   }
 
   if (!pedido) {
-    return error ? <Aviso>{error}</Aviso> : <Vacio>Cargando…</Vacio>;
+    return error ? <Aviso>{error}</Aviso> : <Cargando />;
   }
 
   const activo = pedido.estado === "Activo";

@@ -1,3 +1,5 @@
+import { notificar } from "./Notificaciones";
+import { Cargando } from "./Cargando";
 import { type FormEvent, useEffect, useState } from "react";
 import { ErrorApi } from "./api";
 import { formatoDinero } from "./Dashboard";
@@ -45,9 +47,11 @@ export default function Inventario({ token }: Props) {
       if (edicion === "nuevo") {
         await crearArticulo(token, form);
         setExito("Artículo agregado.");
+      notificar("Artículo agregado.");
       } else if (edicion) {
         await actualizarArticulo(token, edicion.id, form);
         setExito("Artículo actualizado.");
+      notificar("Artículo actualizado.");
       }
       setEdicion(null);
       await cargar();
@@ -109,7 +113,7 @@ export default function Inventario({ token }: Props) {
         </Campo>
       </div>
 
-      {!articulos && !error && <Vacio>Cargando…</Vacio>}
+      {!articulos && !error && <Cargando />}
       {articulos && articulos.length === 0 && <Vacio>No hay artículos para mostrar.</Vacio>}
 
       {articulos && articulos.length > 0 && (

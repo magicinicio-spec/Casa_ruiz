@@ -1,3 +1,4 @@
+import { Cargando } from "./Cargando";
 import { useCallback, useEffect, useState } from "react";
 import {
   colaEntregas,
@@ -8,6 +9,7 @@ import {
   recogerPedido,
 } from "./api";
 import { formatoDinero } from "./Dashboard";
+import { notificar } from "./Notificaciones";
 
 type Pestana = "cola" | "recoger";
 
@@ -47,6 +49,7 @@ export default function Entregas({ token }: Props) {
     setOcupado(pedido.id);
     try {
       await (tipo === "entregar" ? entregarPedido(token, pedido.id) : recogerPedido(token, pedido.id));
+      notificar(tipo === "entregar" ? `Pedido #${pedido.id} entregado.` : `Piezas del pedido #${pedido.id} recogidas.`);
       await cargar();
     } catch (err) {
       setError(err instanceof ErrorApi ? err.message : "No se pudo registrar la acción.");
@@ -80,7 +83,7 @@ export default function Entregas({ token }: Props) {
 
       {error && <p className="login__error" role="alert">{error}</p>}
 
-      {!lista && !error && <p className="texto-lead">Cargando…</p>}
+      {!lista && !error && <Cargando />}
 
       {lista && lista.length === 0 && (
         <p className="texto-lead">
@@ -89,7 +92,7 @@ export default function Entregas({ token }: Props) {
       )}
 
       {lista && lista.length > 0 && (
-        <div className="entregas__lista">
+        <div className="animar entregas__lista">
           {lista.map((pedido) => (
             <article key={pedido.id} className="tarjeta entrega">
               <header className="entrega__encabezado">

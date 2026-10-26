@@ -1,3 +1,5 @@
+import CifraAnimada from "./CifraAnimada";
+import { Cargando } from "./Cargando";
 import { useEffect, useState } from "react";
 import { type Dashboard as DatosDashboard, ErrorApi, obtenerDashboard } from "./api";
 
@@ -24,7 +26,7 @@ export default function Dashboard({ token }: Props) {
   }
 
   if (!datos) {
-    return <p className="texto-lead">Cargando indicadores…</p>;
+    return <Cargando />;
   }
 
   return (
@@ -33,7 +35,7 @@ export default function Dashboard({ token }: Props) {
         Hoy {datos.fecha} · Semana del {datos.inicioSemana} al {datos.finSemana}
       </p>
 
-      <div className="tarjetas">
+      <div className="animar tarjetas">
         <Tarjeta titulo="Pedidos para hoy" cifra={datos.dia.pedidosParaHoy}>
           <Dato etiqueta="Pendientes de entregar" valor={datos.dia.pendientesDeEntregarHoy} />
         </Tarjeta>
@@ -87,7 +89,7 @@ function Tarjeta({
   return (
     <article className="tarjeta">
       <h2 className="texto-caption tarjeta__titulo">{titulo}</h2>
-      <p className="cifra">{cifra}</p>
+      <p className="cifra"><CifraAnimada valor={cifra} /></p>
       <dl className="datos">{children}</dl>
     </article>
   );
