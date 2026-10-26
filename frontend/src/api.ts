@@ -26,7 +26,7 @@ export class ErrorApi extends Error {
   }
 }
 
-async function peticion<T>(ruta: string, opciones: RequestInit = {}, token?: string): Promise<T> {
+export async function peticion<T>(ruta: string, opciones: RequestInit = {}, token?: string): Promise<T> {
   const cabeceras: Record<string, string> = { "Content-Type": "application/json" };
   if (token) {
     cabeceras.Authorization = `Bearer ${token}`;
@@ -42,6 +42,10 @@ async function peticion<T>(ruta: string, opciones: RequestInit = {}, token?: str
   if (!respuesta.ok) {
     const cuerpo = await respuesta.json().catch(() => null);
     throw new ErrorApi(cuerpo?.error ?? "Ocurrió un error inesperado.", respuesta.status);
+  }
+
+  if (respuesta.status === 204) {
+    return undefined as T;
   }
 
   return respuesta.json() as Promise<T>;
@@ -189,6 +193,27 @@ export function porRecogerEntregas(token: string): Promise<Pedido[]> {
   return peticion<Pedido[]>("/api/entregas/por-recoger", {}, token);
 }
 
+export interface ResolucionDanoPedido {
+  id: number;
+  tipo: "Reparado" | "DadoDeBaja" | "Cobrado";
+  cantidad: number;
+  motivo: string | null;
+  monto: number | null;
+  registradoEn: string;
+}
+
+export interface ArticuloPedidoDetalle {
+  id: number;
+  articuloId: number;
+  descripcion: string;
+  cantidad: number;
+  cantidadDevuelta: number | null;
+  cantidadDaniada: number;
+  faltante: number | null;
+  danosSinResolver: number;
+  resoluciones: ResolucionDanoPedido[];
+}
+
 export interface LineaPedido {
   id: number;
   articuloId: number | null;
@@ -197,6 +222,7 @@ export interface LineaPedido {
   cantidad: number;
   precioUnitario: number;
   importe: number;
+  articulos: ArticuloPedidoDetalle[];
 }
 
 /** Pedido tal como lo devuelve la API en pedidos y entregas. */
