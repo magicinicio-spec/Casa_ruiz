@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using CasaRuiz.Api.Configuracion;
 using CasaRuiz.Api.Dtos;
 using CasaRuiz.Api.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +9,7 @@ namespace CasaRuiz.Api.Controllers;
 
 /// <summary>Gestión de usuarios. Solo el administrador.</summary>
 [ApiController]
-[Authorize(Roles = "Administrador")]
+[Authorize(Roles = Permisos.Administracion)]
 [Route("api/[controller]")]
 public class UsuariosController(UsuarioService usuarios) : ControllerBase
 {

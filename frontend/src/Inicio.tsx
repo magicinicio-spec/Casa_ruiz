@@ -7,6 +7,7 @@ interface Props {
 
 const nombresDeRol: Record<Sesion["usuario"]["rol"], string> = {
   Administrador: "Administrador",
+  Superior: "Superior",
   Vendedor: "Vendedor",
   Repartidor: "Repartidor",
   VendedorRepartidor: "Vendedor y repartidor",

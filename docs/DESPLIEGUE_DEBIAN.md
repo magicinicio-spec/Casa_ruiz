@@ -127,8 +127,31 @@ Las migraciones nuevas se aplican solas al arrancar. Los datos se conservan en e
 
 ## 9. Respaldos
 
-**Pendiente de definir.** Ya se acordó que se quieren respaldos automáticos; falta decidir:
+Hay un contenedor `respaldo` que hace un respaldo de la base de datos **cada sábado a las 18:00**. Cada respaldo se verifica y se conservan **los 3 más recientes**. Los archivos quedan en la carpeta `respaldos/` del proyecto, en el disco del servidor.
 
-- Frecuencia (por ejemplo, diaria)
-- Cuántos respaldos conservar
-- Dónde se guardan (otro disco del servidor, una USB, un NAS o una nube)
+Además de `ZONA_HORARIA` en `.env`, el horario no requiere configuración. Para revisar el estado:
+
+```bash
+docker compose logs respaldo
+ls -lh /opt/casa-ruiz/respaldos
+```
+
+### Respaldo inmediato
+
+```bash
+cd /opt/casa-ruiz
+docker compose exec respaldo sh /scripts/respaldo.sh ahora
+```
+
+### Restaurar un respaldo
+
+Restaurar **reemplaza** los datos actuales. Hazlo solo con la API detenida:
+
+```bash
+cd /opt/casa-ruiz
+docker compose stop api
+docker compose exec -T db pg_restore --clean --if-exists -U casa_ruiz -d casa_ruiz < respaldos/NOMBRE_DEL_ARCHIVO.dump
+docker compose start api
+```
+
+Recomendación: copia de vez en cuando la carpeta `respaldos/` a otro equipo o a una USB. Si el disco del servidor falla, los respaldos que estén solo en ese disco se pierden.

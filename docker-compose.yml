@@ -33,5 +33,22 @@ services:
       # saltándose UFW, por eso se amarra a esa IP y no a todas las interfaces.
       - "${API_IP:-0.0.0.0}:8080:8080"
 
+  respaldo:
+    image: postgres:17
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      # Zona horaria para el horario del respaldo (sábados 18:00).
+      TZ: ${ZONA_HORARIA:?Define ZONA_HORARIA en el archivo .env}
+      RESPALDOS_CONSERVAR: "3"
+    volumes:
+      # Los respaldos quedan en el disco del servidor, en la carpeta respaldos/ del proyecto.
+      - ./respaldos:/respaldos
+      - ./backup/respaldo.sh:/scripts/respaldo.sh:ro
+    command: ["sh", "/scripts/respaldo.sh"]
+
 volumes:
   pgdata:

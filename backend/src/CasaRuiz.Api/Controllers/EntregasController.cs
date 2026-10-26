@@ -1,3 +1,5 @@
+using CasaRuiz.Api.Configuracion;
+using Microsoft.AspNetCore.Authorization;
 using CasaRuiz.Api.Dtos;
 using CasaRuiz.Api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -5,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CasaRuiz.Api.Controllers;
 
 [ApiController]
+[Authorize(Roles = Permisos.Entregas)]
 [Route("api/[controller]")]
 public class EntregasController(PedidoService pedidos) : ControllerBase
 {

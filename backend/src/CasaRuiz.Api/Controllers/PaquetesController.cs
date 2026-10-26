@@ -1,3 +1,5 @@
+using CasaRuiz.Api.Configuracion;
+using Microsoft.AspNetCore.Authorization;
 using CasaRuiz.Api.Data;
 using CasaRuiz.Api.Dtos;
 using CasaRuiz.Api.Models;
@@ -8,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace CasaRuiz.Api.Controllers;
 
 [ApiController]
+[Authorize(Roles = Permisos.Operacion)]
 [Route("api/[controller]")]
 public class PaquetesController(AppDbContext db) : ControllerBase
 {

@@ -22,6 +22,7 @@ public class Usuario
 public enum RolUsuario
 {
     Administrador,
+    Superior,
     Vendedor,
     Repartidor,
     VendedorRepartidor

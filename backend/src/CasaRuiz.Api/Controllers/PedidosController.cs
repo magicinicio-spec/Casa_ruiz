@@ -1,3 +1,5 @@
+using CasaRuiz.Api.Configuracion;
+using Microsoft.AspNetCore.Authorization;
 using CasaRuiz.Api.Dtos;
 using CasaRuiz.Api.Models;
 using CasaRuiz.Api.Services;
@@ -6,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CasaRuiz.Api.Controllers;
 
 [ApiController]
+[Authorize(Roles = Permisos.Operacion)]
 [Route("api/[controller]")]
 public class PedidosController(PedidoService pedidos) : ControllerBase
 {
@@ -65,6 +68,7 @@ public class PedidosController(PedidoService pedidos) : ControllerBase
         }
     }
 
+    [Authorize(Roles = Permisos.Control)]
     [HttpPost("{id:int}/revision")]
     public async Task<ActionResult<PedidoResponse>> Revisar(int id, RevisionRequest request)
     {
@@ -80,6 +84,7 @@ public class PedidosController(PedidoService pedidos) : ControllerBase
         }
     }
 
+    [Authorize(Roles = Permisos.Control)]
     [HttpPost("{id:int}/danos")]
     public async Task<ActionResult<PedidoResponse>> ResolverDano(int id, ResolucionDanoRequest request)
     {
@@ -95,6 +100,7 @@ public class PedidosController(PedidoService pedidos) : ControllerBase
         }
     }
 
+    [Authorize(Roles = Permisos.Control)]
     [HttpPost("{id:int}/cerrar")]
     public async Task<ActionResult<PedidoResponse>> Close(int id)
     {

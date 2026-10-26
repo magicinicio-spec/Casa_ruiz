@@ -7,3 +7,6 @@ obj/
 
 # Entorno local
 .env
+
+# Respaldos de la base de datos
+respaldos/

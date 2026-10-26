@@ -99,14 +99,25 @@ Al revisar un pedido entregado se pueden consultar:
 
 ## 10. Usuarios y roles
 
-Roles confirmados:
+- Solo el **administrador** crea usuarios, restablece contraseñas, desactiva, activa y elimina usuarios. Desactivar y eliminar son dos acciones distintas.
+- Inicio de sesión con **usuario y contraseña**. La sesión dura **8 horas**.
+- Datos del usuario: nombre completo, teléfono, usuario y rol.
+- No se lleva trazabilidad de quién hizo cada acción.
+- No se puede desactivar ni eliminar el propio usuario, ni dejar el sistema sin administrador activo.
 
-- **Administrador**
-- **Vendedor / capturista**
-- **Repartidor / entregas**
-- **Vendedor + Repartidor** (rol combinado, adicional a los dos anteriores)
+Roles y permisos:
 
-Los roles exactos de permisos por módulo quedan **PENDIENTE** de definir.
+| Acción | Administrador | Superior | Vendedor | Repartidor | Vendedor + Repartidor |
+|---|:-:|:-:|:-:|:-:|:-:|
+| Inventario y paquetes | ✔ | ✔ | ✔ | ✘ | ✔ |
+| Clientes y pedidos (crear, editar, cancelar) | ✔ | ✔ | ✔ | ✘ | ✔ |
+| Cola de entregas, entregar y recoger | ✔ | ✔ | ✘ | ✔ | ✔ |
+| Revisión, resolver daños y cerrar pedido | ✔ | ✔ | ✘ | ✘ | ✘ |
+| Dashboard y reportes | ✔ | ✔ | ✔ | ✘ | ✔ |
+| Gestionar usuarios | ✔ | ✘ | ✘ | ✘ | ✘ |
+
+- **Superior** tiene los mismos permisos que el administrador, excepto gestionar usuarios.
+- Dashboard y reportes todavía no existen en la API; se aplicará la columna cuando se construyan.
 
 ## 11. Tecnología
 
@@ -129,14 +140,16 @@ Los roles exactos de permisos por módulo quedan **PENDIENTE** de definir.
 
 ---
 
+## Respaldos
+
+- Respaldo **semanal**, cada **sábado a las 18:00**.
+- Se conservan los **3 respaldos más recientes**.
+- Se guardan en la carpeta `respaldos/` del **disco del servidor**.
+
 ## Pendientes para confirmar
 
-1. Paquetes: qué artículos incluye cada uno y si tienen precio propio.
-2. Anticipo: ¿monto y saldo, o solo pagado / no pagado?
-3. IVA: ¿16% fijo?
-4. PDF: ¿con precios y total? ¿con logo?
-5. Dashboard: métricas definitivas.
-6. Reportes: lista definitiva y formato.
-7. Permisos exactos de cada rol.
-8. Moneda y zona horaria.
-9. Lugar de despliegue de Docker (computadora de oficina, servidor propio o nube).
+1. Paquetes: qué artículos incluye cada uno y si tienen precio propio. *(Resuelto: son combinaciones de sillas y mesas con precio propio.)*
+2. Dashboard: métricas definitivas.
+3. Reportes: lista definitiva y formato.
+4. Moneda y zona horaria del servidor (para el respaldo semanal).
+5. Cobros por daño: confirmar si llevan IVA. *(Supuesto actual: no llevan IVA.)*
