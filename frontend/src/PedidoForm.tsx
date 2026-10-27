@@ -1,3 +1,4 @@
+import CampoNumero from "./CampoNumero";
 import { type FormEvent, useMemo, useState } from "react";
 import { type Pedido, ErrorApi } from "./api";
 import ClienteBuscador from "./ClienteBuscador";
@@ -198,8 +199,8 @@ export default function PedidoForm({ token, clientes, articulos, paquetes, pedid
                       </option>
                     ))}
                   </select>
-                  <input className="campo__input" type="number" min={1} step={1} required aria-label="Cantidad" value={l.cantidad}
-                    onChange={(e) => cambiarLinea(i, { cantidad: Number(e.target.value) })} />
+                  <CampoNumero className="campo__input" min={1} step={1} required aria-label="Cantidad" value={l.cantidad}
+              onChange={(v) => cambiarLinea(i, { cantidad: v })} />
                   <span className="lineas__total">{formatoDinero.format(precio * l.cantidad)}</span>
                   <button className="boton boton--secundario boton--chico" type="button" disabled={lineas.length === 1}
                     onClick={() => setLineas((prev) => prev.filter((_, j) => j !== i))}>
@@ -220,8 +221,8 @@ export default function PedidoForm({ token, clientes, articulos, paquetes, pedid
           <h3 className="bloque-form__titulo">4. Pago</h3>
           <div className="formulario">
             <Campo etiqueta="Anticipo (MXN)">
-              <input className="campo__input" type="number" min={0} step="0.01" value={anticipo}
-                onChange={(e) => setAnticipo(Number(e.target.value))} />
+              <CampoNumero className="campo__input" min={0} step="0.01" value={anticipo}
+              onChange={(v) => setAnticipo(v)} />
             </Campo>
             <div className="formulario__casillas">
               <Casilla etiqueta="Pagado" checked={pagado} onChange={setPagado} />

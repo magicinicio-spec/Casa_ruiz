@@ -1,3 +1,4 @@
+import CampoNumero from "./CampoNumero";
 import { notificar } from "./Notificaciones";
 import { Cargando } from "./Cargando";
 import { type FormEvent, useEffect, useState } from "react";
@@ -109,8 +110,8 @@ export default function Paquetes({ token }: Props) {
               <input className="campo__input" required maxLength={200} value={nombre} onChange={(e) => setNombre(e.target.value)} />
             </Campo>
             <Campo etiqueta="Precio del paquete (MXN)">
-              <input className="campo__input" type="number" min={0} step="0.01" required value={precio}
-                onChange={(e) => setPrecio(Number(e.target.value))} />
+              <CampoNumero className="campo__input" min={0} step="0.01" required value={precio}
+              onChange={(v) => setPrecio(v)} />
             </Campo>
           </div>
 
@@ -128,8 +129,8 @@ export default function Paquetes({ token }: Props) {
                 </select>
               </Campo>
               <Campo etiqueta="Cantidad">
-                <input className="campo__input" type="number" min={1} step={1} required value={c.cantidad}
-                  onChange={(e) => cambiarComponente(i, { cantidad: Number(e.target.value) })} />
+                <CampoNumero className="campo__input" min={1} step={1} required value={c.cantidad}
+              onChange={(v) => cambiarComponente(i, { cantidad: v })} />
               </Campo>
               <button className="boton boton--secundario boton--chico" type="button"
                 disabled={componentes.length === 1}

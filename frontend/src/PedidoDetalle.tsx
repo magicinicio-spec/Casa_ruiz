@@ -3,6 +3,7 @@ import { Cargando } from "./Cargando";
 import { useEffect, useState } from "react";
 import { type Pedido, descargarReporte, ErrorApi } from "./api";
 import { formatoDinero } from "./Dashboard";
+import CampoNumero from "./CampoNumero";
 import { Aviso, Campo } from "./ui";
 import {
   cancelarPedido,
@@ -230,7 +231,7 @@ function RevisionArticulos({
         a.id,
         {
           devuelta: a.cantidadDevuelta !== null ? String(a.cantidadDevuelta) : "",
-          daniada: String(a.cantidadDaniada),
+          daniada: a.cantidadDaniada > 0 ? String(a.cantidadDaniada) : "",
         },
       ]),
     ),
@@ -276,7 +277,7 @@ function RevisionArticulos({
           </thead>
           <tbody>
             {articulos.map((a) => {
-              const v = valores[a.id] ?? { devuelta: "", daniada: "0" };
+              const v = valores[a.id] ?? { devuelta: "", daniada: "" };
               const faltante = v.devuelta !== "" ? a.cantidad - Number(v.devuelta) - Number(v.daniada || 0) : null;
               return (
                 <tr key={a.id}>
@@ -284,11 +285,11 @@ function RevisionArticulos({
                   <td className="numero">{a.cantidad}</td>
                   <td className="numero">
                     <input className="campo__input" type="number" min={0} max={a.cantidad} disabled={bloqueado}
-                      value={v.devuelta} onChange={(e) => cambiar(a.id, "devuelta", e.target.value)} />
+                      placeholder="0" value={v.devuelta} onChange={(e) => cambiar(a.id, "devuelta", e.target.value)} />
                   </td>
                   <td className="numero">
                     <input className="campo__input" type="number" min={0} max={a.cantidad} disabled={bloqueado}
-                      value={v.daniada} onChange={(e) => cambiar(a.id, "daniada", e.target.value)} />
+                      placeholder="0" value={v.daniada} onChange={(e) => cambiar(a.id, "daniada", e.target.value)} />
                   </td>
                   <td className="numero">{faltante !== null ? (faltante < 0 ? "Revisa" : faltante) : "—"}</td>
                 </tr>
@@ -351,8 +352,8 @@ function Danos({ token, pedido, articulos, ejecutar }: { token: string; pedido: 
               </select>
             </Campo>
             <Campo etiqueta="Piezas">
-              <input className="campo__input" type="number" min={1} max={a.danosSinResolver} value={f.cantidad}
-                onChange={(e) => cambiar(a, { cantidad: Number(e.target.value) })} />
+              <CampoNumero className="campo__input" min={1} max={a.danosSinResolver} value={f.cantidad}
+                onChange={(v) => cambiar(a, { cantidad: v })} />
             </Campo>
             {f.tipo === "DadoDeBaja" && (
               <Campo etiqueta="Motivo de la baja" className="formulario__completo">
@@ -362,7 +363,7 @@ function Danos({ token, pedido, articulos, ejecutar }: { token: string; pedido: 
             )}
             {f.tipo === "Cobrado" && (
               <Campo etiqueta="Monto a cobrar (MXN)">
-                <input className="campo__input" type="number" min={0.01} step="0.01" value={f.monto}
+                <input className="campo__input" type="number" min={0.01} step="0.01" placeholder="0.00" value={f.monto}
                   onChange={(e) => cambiar(a, { monto: e.target.value })} />
               </Campo>
             )}
