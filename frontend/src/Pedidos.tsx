@@ -71,13 +71,14 @@ export default function Pedidos({ token, puedeOperar, puedeControlar }: Props) {
       .catch((err: unknown) => setError(err instanceof ErrorApi ? err.message : "No se pudieron cargar los datos del pedido."));
   }, [token, vista.modo]);
 
-  function guardado(resultado: PedidoGuardado) {
-    setAvisos(resultado.advertencias);
-    setExito(`Pedido #${resultado.pedido.id} guardado.`);
-      notificar(`Pedido #${resultado.pedido.id} guardado.`);
-    setVista({ modo: "detalle", id: resultado.pedido.id });
+  function guardado(id: number, advertencias: PedidoGuardado["advertencias"]) {
+    setAvisos(advertencias);
+    setExito(`Pedido #${id} guardado.`);
+    notificar(`Pedido #${id} guardado.`);
+    setVista({ modo: "detalle", id });
     cargarLista();
   }
+
 
   if (vista.modo === "nuevo" || vista.modo === "editar") {
     return (

@@ -1,6 +1,6 @@
 import CampoNumero from "./CampoNumero";
 import { type FormEvent, useMemo, useState } from "react";
-import { type Pedido, ErrorApi } from "./api";
+import { ErrorApi } from "./api";
 import ClienteBuscador from "./ClienteBuscador";
 import { formatoDinero } from "./Dashboard";
 import { aFecha, aFechaHora, desdeFecha, desdeFechaHora } from "./fechas";
@@ -12,18 +12,35 @@ import {
   type LineaEntrada,
   type Paquete,
   type PedidoEntrada,
-  type PedidoGuardado,
   actualizarPedido,
+  actualizarCotizacion,
+  type CotizacionEntrada,
+  crearCotizacion,
   crearPedido,
 } from "./recursos";
+
+/** Datos que se pueden editar: un pedido o una cotización (la cotización no tiene anticipo ni pago). */
+export interface Edicion {
+  id: number;
+  clienteId: number;
+  fechaHoraEntrega: string;
+  fechaDevolucion: string;
+  direccionEntrega: string;
+  requiereFactura: boolean;
+  anticipo?: number;
+  pagado?: boolean;
+  lineas: { articuloId: number | null; paqueteId: number | null; cantidad: number }[];
+}
 
 interface Props {
   token: string;
   clientes: Cliente[];
   articulos: Articulo[];
   paquetes: Paquete[];
-  pedido?: Pedido;
-  onGuardado: (resultado: PedidoGuardado) => void;
+  pedido?: Edicion;
+  /** Muestra la forma de cotización: sin anticipo, pagos ni saldo. */
+  cotizacion?: boolean;
+  onGuardado: (id: number, advertencias: AdvertenciaInventario[]) => void;
   onCancelar: () => void;
   onClienteNuevo: (cliente: Cliente) => void;
 }
@@ -36,7 +53,7 @@ interface LineaForm {
 
 const TASA_IVA = 0.16;
 
-export default function PedidoForm({ token, clientes, articulos, paquetes, pedido, onGuardado, onCancelar, onClienteNuevo }: Props) {
+export default function PedidoForm({ token, clientes, articulos, paquetes, pedido, cotizacion = false, onGuardado, onCancelar, onClienteNuevo }: Props) {
   const clienteInicial = pedido ? clientes.find((c) => c.id === pedido.clienteId) : undefined;
   const direccionDelCliente = pedido ? clienteInicial?.direccion === pedido.direccionEntrega : true;
 
@@ -112,10 +129,26 @@ export default function PedidoForm({ token, clientes, articulos, paquetes, pedid
 
     setEnviando(true);
     try {
-      const resultado = pedido
-        ? await actualizarPedido(token, pedido.id, cuerpo)
-        : await crearPedido(token, cuerpo);
-      onGuardado(resultado);
+      if (cotizacion) {
+        const cuerpoCotizacion: CotizacionEntrada = {
+          clienteId,
+          fechaHoraEntrega: cuerpo.fechaHoraEntrega,
+          fechaDevolucion: cuerpo.fechaDevolucion,
+          direccionEsDelCliente: cuerpo.direccionEsDelCliente,
+          direccionOtra: cuerpo.direccionOtra,
+          requiereFactura,
+          lineas: cuerpo.lineas,
+        };
+        const guardada = pedido
+          ? await actualizarCotizacion(token, pedido.id, cuerpoCotizacion)
+          : await crearCotizacion(token, cuerpoCotizacion);
+        onGuardado(guardada.id, []);
+      } else {
+        const resultado = pedido
+          ? await actualizarPedido(token, pedido.id, cuerpo)
+          : await crearPedido(token, cuerpo);
+        onGuardado(resultado.pedido.id, resultado.advertencias);
+      }
     } catch (err) {
       setError(err instanceof ErrorApi ? err.message : "No se pudo guardar el pedido.");
     } finally {
@@ -217,6 +250,7 @@ export default function PedidoForm({ token, clientes, articulos, paquetes, pedid
           </div>
         </section>
 
+        {!cotizacion && (
         <section className="bloque-form panel">
           <h3 className="bloque-form__titulo">4. Pago</h3>
           <div className="formulario">
@@ -230,11 +264,12 @@ export default function PedidoForm({ token, clientes, articulos, paquetes, pedid
             </div>
           </div>
         </section>
+        )}
 
         <div className="pedido-form__acciones">
           <button className="boton boton--secundario" type="button" onClick={onCancelar}>Cancelar</button>
           <button className="boton boton--primario" type="submit" disabled={enviando}>
-            {enviando ? "Guardando…" : "Guardar pedido"}
+            {enviando ? "Guardando…" : cotizacion ? "Guardar cotización" : "Guardar pedido"}
           </button>
         </div>
       </div>
@@ -245,8 +280,8 @@ export default function PedidoForm({ token, clientes, articulos, paquetes, pedid
           <div className="dato"><dt>Subtotal</dt><dd>{formatoDinero.format(resumen.subtotal)}</dd></div>
           {requiereFactura && <div className="dato"><dt>IVA 16%</dt><dd>{formatoDinero.format(resumen.iva)}</dd></div>}
           <div className="dato resumen-pedido__total"><dt>Total</dt><dd>{formatoDinero.format(resumen.total)}</dd></div>
-          <div className="dato"><dt>Anticipo</dt><dd>{formatoDinero.format(anticipo)}</dd></div>
-          <div className="dato resumen-pedido__saldo"><dt>Saldo a pagar</dt><dd>{formatoDinero.format(resumen.saldo)}</dd></div>
+          {!cotizacion && <div className="dato"><dt>Anticipo</dt><dd>{formatoDinero.format(anticipo)}</dd></div>}
+          {!cotizacion && <div className="dato resumen-pedido__saldo"><dt>Saldo a pagar</dt><dd>{formatoDinero.format(resumen.saldo)}</dd></div>}
         </dl>
         <p className="texto-caption">El total definitivo lo calcula el servidor al guardar.</p>
       </aside>

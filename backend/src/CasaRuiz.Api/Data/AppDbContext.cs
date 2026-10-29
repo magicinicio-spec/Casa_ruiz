@@ -23,8 +23,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<Usuario> Usuarios => Set<Usuario>();
 
+    public DbSet<Cotizacion> Cotizaciones => Set<Cotizacion>();
+
+    public DbSet<CotizacionLinea> CotizacionLineas => Set<CotizacionLinea>();
+
+    public DbSet<CotizacionArticulo> CotizacionArticulos => Set<CotizacionArticulo>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        AppDbContextCotizaciones.Configurar(modelBuilder);
+
         modelBuilder.Entity<Articulo>(entity =>
         {
             entity.ToTable("articulos");

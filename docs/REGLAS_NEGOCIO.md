@@ -157,6 +157,13 @@ Roles y permisos:
 - Se conservan los **3 respaldos más recientes**.
 - Se guardan en la carpeta `respaldos/` del **disco del servidor**.
 
+## Cotizaciones
+
+- Una cotización tiene los mismos datos del pedido (cliente, fecha de entrega, fecha de devolución, dirección, artículos y paquetes, factura con IVA 16%).
+- No tiene anticipo, pagado ni saldo, y no aparta inventario.
+- La hoja en PDF (A4) muestra cliente, fecha de entrega, dirección, líneas con su total y el total. Indica que no aparta inventario.
+- Pendiente: si una cotización se convierte en pedido y si tiene fecha de vigencia.
+
 ## Decisiones confirmadas
 
 - Los cobros por daño no llevan IVA.

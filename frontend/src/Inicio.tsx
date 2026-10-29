@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { RolUsuario, Sesion } from "./api";
 import Clientes from "./Clientes";
+import Cotizaciones from "./Cotizaciones";
 import Dashboard from "./Dashboard";
 import Entregas from "./Entregas";
 import Inventario from "./Inventario";
@@ -35,6 +36,7 @@ function gruposDe(rol: RolUsuario): GrupoMenu[] {
       titulo: "Operación",
       items: [
         ...(operacion ? [{ id: "pedidos" as Seccion, nombre: "Pedidos" }] : []),
+        ...(operacion ? [{ id: "cotizaciones" as Seccion, nombre: "Cotizaciones" }] : []),
         ...(entregas ? [{ id: "entregas" as Seccion, nombre: "Entregas" }] : []),
         ...(operacion ? [{ id: "clientes" as Seccion, nombre: "Clientes" }] : []),
       ],
@@ -129,6 +131,7 @@ export default function Inicio({ sesion, onSalir }: Props) {
               <Reportes token={token} />
             </>
           )}
+          {seccion === "cotizaciones" && <Cotizaciones token={token} />}
           {seccion === "clientes" && <Clientes token={token} />}
           {seccion === "inventario" && <Inventario token={token} />}
           {seccion === "paquetes" && <Paquetes token={token} />}

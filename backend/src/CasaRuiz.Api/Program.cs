@@ -68,6 +68,7 @@ builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<PedidoService>();
+builder.Services.AddScoped<CotizacionService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<ReportesService>();
 builder.Services.AddScoped<CasaRuiz.Api.Exportacion.ExportadorReportes>();

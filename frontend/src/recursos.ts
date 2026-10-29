@@ -158,3 +158,49 @@ export const eliminarUsuario = (token: string, id: number) =>
 // Permisos por rol, igual que en la API (ver Configuracion/Permisos.cs).
 export const rolesOperacion: RolUsuario[] = ["Administrador", "Superior", "Vendedor", "VendedorRepartidor"];
 export const rolesControl: RolUsuario[] = ["Administrador", "Superior"];
+
+// Cotizaciones: mismos datos del pedido, sin anticipo ni pagos, y no aparta inventario.
+export interface CotizacionLinea {
+  id: number;
+  articuloId: number | null;
+  paqueteId: number | null;
+  descripcion: string;
+  cantidad: number;
+  precioUnitario: number;
+  importe: number;
+  articulos: { articuloId: number; descripcion: string; cantidad: number }[];
+}
+
+export interface Cotizacion {
+  id: number;
+  fechaCreacion: string;
+  clienteId: number;
+  clienteNombre: string;
+  clienteTelefono: string;
+  fechaHoraEntrega: string;
+  fechaDevolucion: string;
+  direccionEntrega: string;
+  direccionEsDelCliente: boolean;
+  requiereFactura: boolean;
+  subtotal: number;
+  iva: number;
+  total: number;
+  lineas: CotizacionLinea[];
+}
+
+export interface CotizacionEntrada {
+  clienteId: number;
+  fechaHoraEntrega: string;
+  fechaDevolucion: string;
+  direccionEsDelCliente: boolean;
+  direccionOtra?: string | null;
+  requiereFactura: boolean;
+  lineas: LineaEntrada[];
+}
+
+export const listarCotizaciones = (token: string) => peticion<Cotizacion[]>("/api/cotizaciones", {}, token);
+export const obtenerCotizacion = (token: string, id: number) => peticion<Cotizacion>(`/api/cotizaciones/${id}`, {}, token);
+export const crearCotizacion = (token: string, cuerpo: CotizacionEntrada) =>
+  peticion<Cotizacion>("/api/cotizaciones", { method: "POST", body: JSON.stringify(cuerpo) }, token);
+export const actualizarCotizacion = (token: string, id: number, cuerpo: CotizacionEntrada) =>
+  peticion<Cotizacion>(`/api/cotizaciones/${id}`, { method: "PUT", body: JSON.stringify(cuerpo) }, token);

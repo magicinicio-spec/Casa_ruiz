@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-export type Seccion = "dashboard" | "pedidos" | "entregas" | "reportes" | "clientes" | "inventario" | "paquetes" | "usuarios";
+export type Seccion = "dashboard" | "pedidos" | "cotizaciones" | "entregas" | "reportes" | "clientes" | "inventario" | "paquetes" | "usuarios";
 
 export interface ItemMenu {
   id: Seccion;
