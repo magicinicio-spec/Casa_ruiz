@@ -185,6 +185,8 @@ export interface Cotizacion {
   subtotal: number;
   iva: number;
   total: number;
+  pedidoId: number | null;
+  convertidaEn: string | null;
   lineas: CotizacionLinea[];
 }
 
@@ -204,3 +206,7 @@ export const crearCotizacion = (token: string, cuerpo: CotizacionEntrada) =>
   peticion<Cotizacion>("/api/cotizaciones", { method: "POST", body: JSON.stringify(cuerpo) }, token);
 export const actualizarCotizacion = (token: string, id: number, cuerpo: CotizacionEntrada) =>
   peticion<Cotizacion>(`/api/cotizaciones/${id}`, { method: "PUT", body: JSON.stringify(cuerpo) }, token);
+
+/** Crea un pedido a partir de la cotización, con los datos que confirme el usuario. */
+export const convertirCotizacion = (token: string, id: number, cuerpo: PedidoEntrada) =>
+  peticion<PedidoGuardado>(`/api/cotizaciones/${id}/convertir`, { method: "POST", body: JSON.stringify(cuerpo) }, token);

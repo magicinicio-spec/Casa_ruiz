@@ -14,6 +14,7 @@ import {
   type PedidoEntrada,
   actualizarPedido,
   actualizarCotizacion,
+  convertirCotizacion,
   type CotizacionEntrada,
   crearCotizacion,
   crearPedido,
@@ -37,7 +38,12 @@ interface Props {
   clientes: Cliente[];
   articulos: Articulo[];
   paquetes: Paquete[];
+  /** Pedido o cotización existente que se edita. */
   pedido?: Edicion;
+  /** Valores iniciales cuando se crea algo nuevo a partir de otro (por ejemplo, convertir una cotización). */
+  inicial?: Edicion;
+  /** Id de la cotización que se convierte en pedido. */
+  convertirDesde?: number;
   /** Muestra la forma de cotización: sin anticipo, pagos ni saldo. */
   cotizacion?: boolean;
   onGuardado: (id: number, advertencias: AdvertenciaInventario[]) => void;
@@ -53,21 +59,22 @@ interface LineaForm {
 
 const TASA_IVA = 0.16;
 
-export default function PedidoForm({ token, clientes, articulos, paquetes, pedido, cotizacion = false, onGuardado, onCancelar, onClienteNuevo }: Props) {
-  const clienteInicial = pedido ? clientes.find((c) => c.id === pedido.clienteId) : undefined;
-  const direccionDelCliente = pedido ? clienteInicial?.direccion === pedido.direccionEntrega : true;
+export default function PedidoForm({ token, clientes, articulos, paquetes, pedido, inicial, convertirDesde, cotizacion = false, onGuardado, onCancelar, onClienteNuevo }: Props) {
+  const base = pedido ?? inicial;
+  const clienteInicial = base ? clientes.find((c) => c.id === base.clienteId) : undefined;
+  const direccionDelCliente = base ? clienteInicial?.direccion === base.direccionEntrega : true;
 
-  const [clienteId, setClienteId] = useState(pedido?.clienteId ?? clientes[0]?.id ?? 0);
-  const [fechaEntrega, setFechaEntrega] = useState(pedido ? desdeFechaHora(pedido.fechaHoraEntrega) : "");
-  const [fechaDevolucion, setFechaDevolucion] = useState(pedido ? desdeFecha(pedido.fechaDevolucion) : "");
+  const [clienteId, setClienteId] = useState(base?.clienteId ?? clientes[0]?.id ?? 0);
+  const [fechaEntrega, setFechaEntrega] = useState(base ? desdeFechaHora(base.fechaHoraEntrega) : "");
+  const [fechaDevolucion, setFechaDevolucion] = useState(base ? desdeFecha(base.fechaDevolucion) : "");
   const [usarDireccionCliente, setUsarDireccionCliente] = useState(direccionDelCliente);
-  const [direccionOtra, setDireccionOtra] = useState(direccionDelCliente ? "" : pedido?.direccionEntrega ?? "");
-  const [requiereFactura, setRequiereFactura] = useState(pedido?.requiereFactura ?? false);
-  const [anticipo, setAnticipo] = useState(pedido?.anticipo ?? 0);
-  const [pagado, setPagado] = useState(pedido?.pagado ?? false);
+  const [direccionOtra, setDireccionOtra] = useState(direccionDelCliente ? "" : base?.direccionEntrega ?? "");
+  const [requiereFactura, setRequiereFactura] = useState(base?.requiereFactura ?? false);
+  const [anticipo, setAnticipo] = useState(base?.anticipo ?? 0);
+  const [pagado, setPagado] = useState(base?.pagado ?? false);
   const [lineas, setLineas] = useState<LineaForm[]>(
-    pedido
-      ? pedido.lineas.map((l) =>
+    base
+      ? base.lineas.map((l) =>
           l.paqueteId !== null
             ? { tipo: "paquete", id: l.paqueteId, cantidad: l.cantidad }
             : { tipo: "articulo", id: l.articuloId ?? 0, cantidad: l.cantidad },
@@ -129,7 +136,10 @@ export default function PedidoForm({ token, clientes, articulos, paquetes, pedid
 
     setEnviando(true);
     try {
-      if (cotizacion) {
+      if (convertirDesde !== undefined) {
+        const resultado = await convertirCotizacion(token, convertirDesde, cuerpo);
+        onGuardado(resultado.pedido.id, resultado.advertencias);
+      } else if (cotizacion) {
         const cuerpoCotizacion: CotizacionEntrada = {
           clienteId,
           fechaHoraEntrega: cuerpo.fechaHoraEntrega,
@@ -269,7 +279,7 @@ export default function PedidoForm({ token, clientes, articulos, paquetes, pedid
         <div className="pedido-form__acciones">
           <button className="boton boton--secundario" type="button" onClick={onCancelar}>Cancelar</button>
           <button className="boton boton--primario" type="submit" disabled={enviando}>
-            {enviando ? "Guardando…" : cotizacion ? "Guardar cotización" : "Guardar pedido"}
+            {enviando ? "Guardando…" : convertirDesde !== undefined ? "Crear pedido" : cotizacion ? "Guardar cotización" : "Guardar pedido"}
           </button>
         </div>
       </div>

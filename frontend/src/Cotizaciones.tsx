@@ -25,6 +25,7 @@ type Vista =
   | { modo: "lista" }
   | { modo: "nueva" }
   | { modo: "editar"; cotizacion: Edicion }
+  | { modo: "convertir"; id: number; inicial: Edicion }
   | { modo: "detalle"; id: number };
 
 export default function Cotizaciones({ token }: Props) {
@@ -49,7 +50,7 @@ export default function Cotizaciones({ token }: Props) {
   }, [token]);
 
   useEffect(() => {
-    if (vista.modo !== "nueva" && vista.modo !== "editar") return;
+    if (vista.modo !== "nueva" && vista.modo !== "editar" && vista.modo !== "convertir") return;
     Promise.all([listarClientes(token), listarArticulos(token), listarPaquetes(token)])
       .then(([c, a, p]) => {
         setClientes(c);
@@ -59,8 +60,34 @@ export default function Cotizaciones({ token }: Props) {
       .catch((err: unknown) => setError(err instanceof ErrorApi ? err.message : "No se pudieron cargar los datos."));
   }, [token, vista.modo]);
 
-  if (vista.modo === "nueva" || vista.modo === "editar") {
+  if (vista.modo === "nueva" || vista.modo === "editar" || vista.modo === "convertir") {
     const editando = vista.modo === "editar";
+    const convirtiendo = vista.modo === "convertir";
+    if (convirtiendo) {
+      return (
+        <section className="seccion">
+          <Encabezado titulo={`Convertir cotización #${vista.id} en pedido`} />
+          <p className="texto-caption">Revisa los datos. Si cambió algo desde la cotización, ajústalo aquí antes de crear el pedido.</p>
+          {error && <Aviso>{error}</Aviso>}
+          <PedidoForm
+            key={`convertir-${vista.id}`}
+            token={token}
+            clientes={clientes}
+            articulos={articulos}
+            paquetes={paquetes}
+            inicial={vista.inicial}
+            convertirDesde={vista.id}
+            onGuardado={(pedidoId) => {
+              notificar(`Pedido #${pedidoId} creado desde la cotización.`);
+              cargarLista();
+              setVista({ modo: "detalle", id: vista.id });
+            }}
+            onCancelar={() => setVista({ modo: "detalle", id: vista.id })}
+            onClienteNuevo={(cliente) => setClientes((prev) => [...prev, cliente])}
+          />
+        </section>
+      );
+    }
     return (
       <section className="seccion">
         <Encabezado titulo={editando ? `Cotización #${vista.cotizacion.id}` : "Nueva cotización"} />
@@ -91,7 +118,8 @@ export default function Cotizaciones({ token }: Props) {
 
   if (vista.modo === "detalle") {
     return <DetalleCotizacion token={token} id={vista.id} onVolver={() => setVista({ modo: "lista" })}
-      onEditar={(cotizacion) => setVista({ modo: "editar", cotizacion })} />;
+      onEditar={(cotizacion) => setVista({ modo: "editar", cotizacion })}
+      onConvertir={(inicial) => setVista({ modo: "convertir", id: vista.id, inicial })} />;
   }
 
   return (
@@ -144,11 +172,24 @@ export default function Cotizaciones({ token }: Props) {
   );
 }
 
-function DetalleCotizacion({ token, id, onVolver, onEditar }: {
+function edicionDe(c: Cotizacion): Edicion {
+  return {
+    id: c.id,
+    clienteId: c.clienteId,
+    fechaHoraEntrega: c.fechaHoraEntrega,
+    fechaDevolucion: c.fechaDevolucion,
+    direccionEntrega: c.direccionEntrega,
+    requiereFactura: c.requiereFactura,
+    lineas: c.lineas.map((l) => ({ articuloId: l.articuloId, paqueteId: l.paqueteId, cantidad: l.cantidad })),
+  };
+}
+
+function DetalleCotizacion({ token, id, onVolver, onEditar, onConvertir }: {
   token: string;
   id: number;
   onVolver: () => void;
   onEditar: (cotizacion: Edicion) => void;
+  onConvertir: (inicial: Edicion) => void;
 }) {
   const [cotizacion, setCotizacion] = useState<Cotizacion | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -182,12 +223,21 @@ function DetalleCotizacion({ token, id, onVolver, onEditar }: {
             <div className="dato"><dt>Total</dt><dd>{formatoDinero.format(cotizacion.total)}</dd></div>
           </dl>
         </div>
+        {cotizacion.pedidoId !== null && (
+          <Aviso tipo="info">Esta cotización se convirtió en el pedido #{cotizacion.pedidoId}. Ya no se puede editar.</Aviso>
+        )}
         <div className="lista-acciones">
-          <button className="boton boton--primario" type="button"
+          {cotizacion.pedidoId === null && (
+            <button className="boton boton--primario" type="button" onClick={() => onConvertir(edicionDe(cotizacion))}>
+              Convertir en pedido
+            </button>
+          )}
+          <button className="boton boton--secundario" type="button"
             onClick={() => descargarReporte(`/api/cotizaciones/${cotizacion.id}/imprimir`, token, `cotizacion-${cotizacion.id}.pdf`)
               .catch((err: unknown) => setError(err instanceof ErrorApi ? err.message : "No se pudo imprimir."))}>
             Imprimir cotización
           </button>
+          {cotizacion.pedidoId === null && (
           <button className="boton boton--secundario" type="button"
             onClick={() => onEditar({
               id: cotizacion.id,
@@ -200,6 +250,7 @@ function DetalleCotizacion({ token, id, onVolver, onEditar }: {
             })}>
             Editar
           </button>
+          )}
         </div>
       </div>
 

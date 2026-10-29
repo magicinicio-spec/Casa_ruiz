@@ -56,6 +56,20 @@ public class CotizacionesController(CotizacionService cotizaciones) : Controller
         }
     }
 
+    /// <summary>Crea un pedido a partir de la cotización, con los datos que confirme el usuario.</summary>
+    [HttpPost("{id:int}/convertir")]
+    public async Task<ActionResult<PedidoGuardadoResponse>> Convertir(int id, PedidoRequest request, [FromServices] PedidoService pedidos)
+    {
+        try
+        {
+            return Ok(await cotizaciones.ConvertirAsync(id, request, pedidos));
+        }
+        catch (ReglaNegocioException ex)
+        {
+            return StatusCode(ex.Codigo, new { error = ex.Message });
+        }
+    }
+
     /// <summary>Hoja de la cotización en PDF tamaño carta A4.</summary>
     [HttpGet("{id:int}/imprimir")]
     public async Task<IActionResult> Imprimir(int id)

@@ -98,6 +98,9 @@ namespace CasaRuiz.Api.Migrations
                     b.Property<int>("ClienteId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTimeOffset?>("ConvertidaEn")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("DireccionEntrega")
                         .IsRequired()
                         .HasMaxLength(400)
@@ -114,6 +117,9 @@ namespace CasaRuiz.Api.Migrations
 
                     b.Property<DateTime>("FechaHoraEntrega")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("PedidoId")
+                        .HasColumnType("integer");
 
                     b.Property<bool>("RequiereFactura")
                         .HasColumnType("boolean");

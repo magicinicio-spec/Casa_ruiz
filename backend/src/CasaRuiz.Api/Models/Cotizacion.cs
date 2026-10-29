@@ -24,6 +24,11 @@ public class Cotizacion
     public bool RequiereFactura { get; set; }
 
     public List<CotizacionLinea> Lineas { get; set; } = [];
+
+    /// <summary>Pedido creado a partir de esta cotización. Null mientras no se convierta.</summary>
+    public int? PedidoId { get; set; }
+
+    public DateTimeOffset? ConvertidaEn { get; set; }
 }
 
 public class CotizacionLinea

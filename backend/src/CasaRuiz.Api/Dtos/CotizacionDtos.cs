@@ -26,6 +26,8 @@ public record CotizacionResponse(
     decimal Subtotal,
     decimal Iva,
     decimal Total,
+    int? PedidoId,
+    DateTimeOffset? ConvertidaEn,
     List<CotizacionLineaResponse> Lineas);
 
 public record CotizacionLineaResponse(

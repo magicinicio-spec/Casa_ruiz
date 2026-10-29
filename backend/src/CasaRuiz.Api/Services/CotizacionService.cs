@@ -47,10 +47,41 @@ public class CotizacionService(AppDbContext db)
             return false;
         }
 
+        if (cotizacion.PedidoId is not null)
+        {
+            throw new ReglaNegocioException("Esta cotización ya se convirtió en pedido y no se puede editar.", StatusCodes.Status409Conflict);
+        }
+
         await AplicarAsync(cotizacion, request, ct);
         await db.SaveChangesAsync(ct);
 
         return true;
+    }
+
+    /// <summary>
+    /// Crea un pedido con los datos que confirme el usuario (pueden diferir de la cotización)
+    /// y marca la cotización como convertida. Ambas cosas se guardan juntas o no se guarda ninguna.
+    /// </summary>
+    public async Task<PedidoGuardadoResponse> ConvertirAsync(int id, PedidoRequest request, PedidoService pedidos, CancellationToken ct = default)
+    {
+        var cotizacion = await db.Cotizaciones.FirstOrDefaultAsync(c => c.Id == id, ct)
+            ?? throw new ReglaNegocioException("La cotización no existe.", StatusCodes.Status404NotFound);
+
+        if (cotizacion.PedidoId is not null)
+        {
+            throw new ReglaNegocioException("Esta cotización ya se convirtió en pedido.", StatusCodes.Status409Conflict);
+        }
+
+        await using var transaccion = await db.Database.BeginTransactionAsync(ct);
+
+        var resultado = await pedidos.CrearAsync(request, ct);
+
+        cotizacion.PedidoId = resultado.Pedido.Id;
+        cotizacion.ConvertidaEn = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(ct);
+        await transaccion.CommitAsync(ct);
+
+        return resultado;
     }
 
     private async Task AplicarAsync(Cotizacion cotizacion, CotizacionRequest request, CancellationToken ct)
@@ -182,6 +213,8 @@ public class CotizacionService(AppDbContext db)
             subtotal,
             iva,
             subtotal + iva,
+            c.PedidoId,
+            c.ConvertidaEn,
             c.Lineas.Select(l => new CotizacionLineaResponse(
                 l.Id,
                 l.ArticuloId,

@@ -162,7 +162,9 @@ Roles y permisos:
 - Una cotización tiene los mismos datos del pedido (cliente, fecha de entrega, fecha de devolución, dirección, artículos y paquetes, factura con IVA 16%).
 - No tiene anticipo, pagado ni saldo, y no aparta inventario.
 - La hoja en PDF (A4) muestra cliente, fecha de entrega, dirección, líneas con su total y el total. Indica que no aparta inventario.
-- Pendiente: si una cotización se convierte en pedido y si tiene fecha de vigencia.
+- Una cotización se puede convertir en pedido. Al convertir se abre el formulario de pedido con los datos de la cotización, y se pueden hacer cambios antes de guardar.
+- Al convertir, la cotización queda marcada con el pedido creado. Una cotización convertida ya no se puede editar ni convertir de nuevo.
+- Las cotizaciones no tienen fecha de vigencia.
 
 ## Decisiones confirmadas
 
