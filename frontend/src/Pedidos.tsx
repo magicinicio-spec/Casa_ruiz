@@ -1,3 +1,5 @@
+import { notificar } from "./Notificaciones";
+import { Cargando } from "./Cargando";
 import { useEffect, useState } from "react";
 import { type Pedido, ErrorApi } from "./api";
 import { formatoDinero } from "./Dashboard";
@@ -69,12 +71,14 @@ export default function Pedidos({ token, puedeOperar, puedeControlar }: Props) {
       .catch((err: unknown) => setError(err instanceof ErrorApi ? err.message : "No se pudieron cargar los datos del pedido."));
   }, [token, vista.modo]);
 
-  function guardado(resultado: PedidoGuardado) {
-    setAvisos(resultado.advertencias);
-    setExito(`Pedido #${resultado.pedido.id} guardado.`);
-    setVista({ modo: "detalle", id: resultado.pedido.id });
+  function guardado(id: number, advertencias: PedidoGuardado["advertencias"]) {
+    setAvisos(advertencias);
+    setExito(`Pedido #${id} guardado.`);
+    notificar(`Pedido #${id} guardado.`);
+    setVista({ modo: "detalle", id });
     cargarLista();
   }
+
 
   if (vista.modo === "nuevo" || vista.modo === "editar") {
     return (
@@ -92,6 +96,7 @@ export default function Pedidos({ token, puedeOperar, puedeControlar }: Props) {
             paquetes={paquetes}
             pedido={vista.modo === "editar" ? vista.pedido : undefined}
             onGuardado={guardado}
+            onClienteNuevo={(cliente) => setClientes((prev) => [...prev, cliente])}
             onCancelar={() => setVista(vista.modo === "editar" ? { modo: "detalle", id: vista.pedido.id } : { modo: "lista" })}
           />
         )}
@@ -152,7 +157,7 @@ export default function Pedidos({ token, puedeOperar, puedeControlar }: Props) {
       </nav>
 
       {error && <Aviso>{error}</Aviso>}
-      {!pedidos && !error && <Vacio>Cargando…</Vacio>}
+      {!pedidos && !error && <Cargando />}
       {pedidos && pedidos.length === 0 && <Vacio>No hay pedidos en esta lista.</Vacio>}
 
       {pedidos && pedidos.length > 0 && (
@@ -175,9 +180,9 @@ export default function Pedidos({ token, puedeOperar, puedeControlar }: Props) {
                   <td>#{p.id}</td>
                   <td>{p.clienteNombre}</td>
                   <td>{p.fechaHoraEntrega}</td>
-                  <td><span className="estado">{p.estado}</span></td>
+                  <td><span className={`estado estado--${p.estado.toLowerCase()}`}>{p.estado}</span></td>
                   <td className="numero">{formatoDinero.format(p.total)}</td>
-                  <td>{p.pagado ? "Pagado" : "No pagado"}</td>
+                  <td><span className={`estado ${p.pagado ? "estado--pagado" : "estado--pendiente"}`}>{p.pagado ? "Pagado" : "No pagado"}</span></td>
                   <td>
                     <button className="boton boton--secundario boton--chico" type="button"
                       onClick={() => { setAvisos([]); setExito(null); setVista({ modo: "detalle", id: p.id }); }}>

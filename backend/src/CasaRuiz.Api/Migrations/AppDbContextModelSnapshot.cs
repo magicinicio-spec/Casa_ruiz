@@ -87,6 +87,123 @@ namespace CasaRuiz.Api.Migrations
                     b.ToTable("clientes", (string)null);
                 });
 
+            modelBuilder.Entity("CasaRuiz.Api.Models.Cotizacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ConvertidaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DireccionEntrega")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<bool>("DireccionEsDelCliente")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("FechaCreacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("FechaDevolucion")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("FechaHoraEntrega")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("PedidoId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("RequiereFactura")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClienteId");
+
+                    b.ToTable("cotizaciones", (string)null);
+                });
+
+            modelBuilder.Entity("CasaRuiz.Api.Models.CotizacionArticulo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ArticuloId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CotizacionLineaId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CotizacionLineaId");
+
+                    b.ToTable("cotizacion_articulos", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_cotizacion_articulos_cantidad_positiva", "\"Cantidad\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("CasaRuiz.Api.Models.CotizacionLinea", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ArticuloId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CotizacionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("PaqueteId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("PrecioUnitario")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CotizacionId");
+
+                    b.ToTable("cotizacion_lineas", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_cotizacion_lineas_cantidad_positiva", "\"Cantidad\" > 0");
+
+                            t.HasCheckConstraint("ck_cotizacion_lineas_un_tipo", "(\"ArticuloId\" IS NULL) <> (\"PaqueteId\" IS NULL)");
+                        });
+                });
+
             modelBuilder.Entity("CasaRuiz.Api.Models.Paquete", b =>
                 {
                     b.Property<int>("Id")
@@ -370,6 +487,39 @@ namespace CasaRuiz.Api.Migrations
                     b.ToTable("usuarios", (string)null);
                 });
 
+            modelBuilder.Entity("CasaRuiz.Api.Models.Cotizacion", b =>
+                {
+                    b.HasOne("CasaRuiz.Api.Models.Cliente", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Cliente");
+                });
+
+            modelBuilder.Entity("CasaRuiz.Api.Models.CotizacionArticulo", b =>
+                {
+                    b.HasOne("CasaRuiz.Api.Models.CotizacionLinea", "CotizacionLinea")
+                        .WithMany("Articulos")
+                        .HasForeignKey("CotizacionLineaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CotizacionLinea");
+                });
+
+            modelBuilder.Entity("CasaRuiz.Api.Models.CotizacionLinea", b =>
+                {
+                    b.HasOne("CasaRuiz.Api.Models.Cotizacion", "Cotizacion")
+                        .WithMany("Lineas")
+                        .HasForeignKey("CotizacionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cotizacion");
+                });
+
             modelBuilder.Entity("CasaRuiz.Api.Models.PaqueteArticulo", b =>
                 {
                     b.HasOne("CasaRuiz.Api.Models.Articulo", "Articulo")
@@ -445,6 +595,16 @@ namespace CasaRuiz.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("PedidoArticulo");
+                });
+
+            modelBuilder.Entity("CasaRuiz.Api.Models.Cotizacion", b =>
+                {
+                    b.Navigation("Lineas");
+                });
+
+            modelBuilder.Entity("CasaRuiz.Api.Models.CotizacionLinea", b =>
+                {
+                    b.Navigation("Articulos");
                 });
 
             modelBuilder.Entity("CasaRuiz.Api.Models.Paquete", b =>

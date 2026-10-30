@@ -1,3 +1,5 @@
+import { notificar } from "./Notificaciones";
+import { Cargando } from "./Cargando";
 import { type FormEvent, useEffect, useState } from "react";
 import { ErrorApi } from "./api";
 import { Aviso, Campo, Encabezado, Vacio } from "./ui";
@@ -44,9 +46,11 @@ export default function Clientes({ token }: Props) {
       if (edicion === "nuevo") {
         await crearCliente(token, form);
         setExito("Cliente agregado.");
+      notificar("Cliente agregado.");
       } else if (edicion) {
         await actualizarCliente(token, edicion.id, form);
         setExito("Cliente actualizado.");
+      notificar("Cliente actualizado.");
       }
       setEdicion(null);
       await cargar();
@@ -101,7 +105,7 @@ export default function Clientes({ token }: Props) {
         </Campo>
       </div>
 
-      {!clientes && !error && <Vacio>Cargando…</Vacio>}
+      {!clientes && !error && <Cargando />}
       {clientes && clientes.length === 0 && <Vacio>No hay clientes para mostrar.</Vacio>}
 
       {clientes && clientes.length > 0 && (

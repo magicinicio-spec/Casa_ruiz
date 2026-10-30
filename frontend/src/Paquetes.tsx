@@ -1,3 +1,6 @@
+import CampoNumero from "./CampoNumero";
+import { notificar } from "./Notificaciones";
+import { Cargando } from "./Cargando";
 import { type FormEvent, useEffect, useState } from "react";
 import { ErrorApi } from "./api";
 import { formatoDinero } from "./Dashboard";
@@ -72,9 +75,11 @@ export default function Paquetes({ token }: Props) {
       if (edicion === "nuevo") {
         await crearPaquete(token, cuerpo);
         setExito("Paquete creado.");
+      notificar("Paquete creado.");
       } else if (edicion) {
         await actualizarPaquete(token, edicion.id, cuerpo);
         setExito("Paquete actualizado.");
+      notificar("Paquete actualizado.");
       }
       setEdicion(null);
       await cargar();
@@ -105,8 +110,8 @@ export default function Paquetes({ token }: Props) {
               <input className="campo__input" required maxLength={200} value={nombre} onChange={(e) => setNombre(e.target.value)} />
             </Campo>
             <Campo etiqueta="Precio del paquete (MXN)">
-              <input className="campo__input" type="number" min={0} step="0.01" required value={precio}
-                onChange={(e) => setPrecio(Number(e.target.value))} />
+              <CampoNumero className="campo__input" min={0} step="0.01" required value={precio}
+              onChange={(v) => setPrecio(v)} />
             </Campo>
           </div>
 
@@ -124,8 +129,8 @@ export default function Paquetes({ token }: Props) {
                 </select>
               </Campo>
               <Campo etiqueta="Cantidad">
-                <input className="campo__input" type="number" min={1} step={1} required value={c.cantidad}
-                  onChange={(e) => cambiarComponente(i, { cantidad: Number(e.target.value) })} />
+                <CampoNumero className="campo__input" min={1} step={1} required value={c.cantidad}
+              onChange={(v) => cambiarComponente(i, { cantidad: v })} />
               </Campo>
               <button className="boton boton--secundario boton--chico" type="button"
                 disabled={componentes.length === 1}
@@ -148,11 +153,11 @@ export default function Paquetes({ token }: Props) {
         </form>
       )}
 
-      {!paquetes && !error && <Vacio>Cargando…</Vacio>}
+      {!paquetes && !error && <Cargando />}
       {paquetes && paquetes.length === 0 && <Vacio>Todavía no hay paquetes.</Vacio>}
 
       {paquetes && paquetes.length > 0 && (
-        <div className="dos-columnas">
+        <div className="animar dos-columnas">
           {paquetes.map((p) => (
             <article key={p.id} className="tarjeta">
               <div className="encabezado-seccion">

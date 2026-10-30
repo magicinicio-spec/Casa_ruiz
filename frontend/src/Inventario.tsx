@@ -1,3 +1,6 @@
+import CampoNumero from "./CampoNumero";
+import { notificar } from "./Notificaciones";
+import { Cargando } from "./Cargando";
 import { type FormEvent, useEffect, useState } from "react";
 import { ErrorApi } from "./api";
 import { formatoDinero } from "./Dashboard";
@@ -45,9 +48,11 @@ export default function Inventario({ token }: Props) {
       if (edicion === "nuevo") {
         await crearArticulo(token, form);
         setExito("Artículo agregado.");
+      notificar("Artículo agregado.");
       } else if (edicion) {
         await actualizarArticulo(token, edicion.id, form);
         setExito("Artículo actualizado.");
+      notificar("Artículo actualizado.");
       }
       setEdicion(null);
       await cargar();
@@ -87,12 +92,12 @@ export default function Inventario({ token }: Props) {
               onChange={(e) => actualizar("categoria", e.target.value)} />
           </Campo>
           <Campo etiqueta="Precio de renta (MXN)">
-            <input className="campo__input" type="number" min={0} step="0.01" required value={form.precioRenta}
-              onChange={(e) => actualizar("precioRenta", Number(e.target.value))} />
+            <CampoNumero className="campo__input" min={0} step="0.01" required value={form.precioRenta}
+              onChange={(v) => actualizar("precioRenta", v)} />
           </Campo>
           <Campo etiqueta="Existencia total (piezas)">
-            <input className="campo__input" type="number" min={0} step={1} required value={form.existenciaTotal}
-              onChange={(e) => actualizar("existenciaTotal", Number(e.target.value))} />
+            <CampoNumero className="campo__input" min={0} step={1} required value={form.existenciaTotal}
+              onChange={(v) => actualizar("existenciaTotal", v)} />
           </Campo>
           <div className="formulario__botones">
             <button className="boton boton--primario" type="submit">Guardar</button>
@@ -109,7 +114,7 @@ export default function Inventario({ token }: Props) {
         </Campo>
       </div>
 
-      {!articulos && !error && <Vacio>Cargando…</Vacio>}
+      {!articulos && !error && <Cargando />}
       {articulos && articulos.length === 0 && <Vacio>No hay artículos para mostrar.</Vacio>}
 
       {articulos && articulos.length > 0 && (

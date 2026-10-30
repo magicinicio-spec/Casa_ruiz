@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { type Dashboard as DatosDashboard, ErrorApi, obtenerDashboard } from "./api";
+import CifraAnimada from "./CifraAnimada";
+import { BarrasHorizontales, Dona, GraficaDias } from "./Graficas";
+import { Aviso } from "./ui";
+import { Cargando } from "./Cargando";
 
 interface Props {
   token: string;
@@ -14,90 +18,114 @@ export default function Dashboard({ token }: Props) {
   useEffect(() => {
     obtenerDashboard(token)
       .then(setDatos)
-      .catch((err: unknown) =>
-        setError(err instanceof ErrorApi ? err.message : "No se pudo cargar el dashboard."),
-      );
+      .catch((err: unknown) => setError(err instanceof ErrorApi ? err.message : "No se pudo cargar el dashboard."));
   }, [token]);
 
-  if (error) {
-    return <p className="login__error" role="alert">{error}</p>;
-  }
+  if (error) return <Aviso>{error}</Aviso>;
+  if (!datos) return <Cargando />;
 
-  if (!datos) {
-    return <p className="texto-lead">Cargando indicadores…</p>;
-  }
+  const s = datos.semana;
+  const sit = datos.situacion;
+  const hora = new Date().getHours();
+  const saludo = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches";
 
   return (
     <section className="dashboard">
-      <p className="texto-caption">
-        Hoy {datos.fecha} · Semana del {datos.inicioSemana} al {datos.finSemana}
-      </p>
+      <header className="dashboard__saludo">
+        <h2 className="titulo-subheading">{saludo}</h2>
+        <p className="texto-caption">
+          Hoy {datos.fecha} · Semana del {datos.inicioSemana} al {datos.finSemana}
+        </p>
+      </header>
 
-      <div className="tarjetas">
-        <Tarjeta titulo="Pedidos para hoy" cifra={datos.dia.pedidosParaHoy}>
-          <Dato etiqueta="Pendientes de entregar" valor={datos.dia.pendientesDeEntregarHoy} />
-        </Tarjeta>
+      <div className="dash-grid animar">
+        {/* Tarjeta principal: ingresos y pedidos de la semana */}
+        <article className="panel dash-card dash-card--ancha dash-card--ambar">
+          <div className="dash-card__cabecera">
+            <div>
+              <p className="tarjeta__titulo">Ingresos de la semana</p>
+              <p className="dash-card__cifra-grande">{formatoDinero.format(s.ingresos)}</p>
+            </div>
+            <span className="estado">{s.total} pedidos</span>
+          </div>
+          <GraficaDias dias={datos.diasSemana} />
+        </article>
 
-        <Tarjeta titulo="Esta semana" cifra={datos.semana.total}>
-          <Dato etiqueta="Pendientes de entregar" valor={datos.semana.pendientesDeEntregar} />
-          <Dato etiqueta="Por recoger" valor={datos.semana.porRecoger} />
-          <Dato etiqueta="Por revisar" valor={datos.semana.porRevisar} />
-          <Dato etiqueta="Cerrados" valor={datos.semana.cerrados} />
-          <Dato etiqueta="Cancelados" valor={datos.semana.cancelados} />
-          <Dato etiqueta="Ingresos" valor={formatoDinero.format(datos.semana.ingresos)} />
-        </Tarjeta>
+        <article className="panel dash-card dash-card--cobalto">
+          <p className="tarjeta__titulo">Pedidos para hoy</p>
+          <p className="cifra"><CifraAnimada valor={datos.dia.pedidosParaHoy} /></p>
+          <dl className="datos">
+            <div className="dato"><dt>Pendientes de entregar</dt><dd>{datos.dia.pendientesDeEntregarHoy}</dd></div>
+          </dl>
+        </article>
 
-        <Tarjeta titulo="Situación actual" cifra={datos.situacion.colaEntrega}>
-          <Dato etiqueta="En cola de entrega" valor={datos.situacion.colaEntrega} />
-          <Dato etiqueta="Por recoger" valor={datos.situacion.porRecoger} />
-          <Dato etiqueta="Próximos 7 días" valor={datos.situacion.proximosSieteDias} />
-          <Dato etiqueta="Con daños sin resolver" valor={datos.situacion.conDanosSinResolver} />
-          <Dato etiqueta="Saldo por cobrar" valor={formatoDinero.format(datos.situacion.saldoPorCobrar)} />
-        </Tarjeta>
-      </div>
+        <article className="panel dash-card dash-card--violeta">
+          <p className="tarjeta__titulo">Esta semana</p>
+          <p className="cifra"><CifraAnimada valor={s.total} /></p>
+          <dl className="datos">
+            <div className="dato"><dt>Cancelados</dt><dd>{s.cancelados}</dd></div>
+            <div className="dato"><dt>Cerrados</dt><dd>{s.cerrados}</dd></div>
+          </dl>
+        </article>
 
-      <div className="tarjeta">
-        <h2 className="titulo-subheading">Artículos más rentados esta semana</h2>
-        {datos.articulosMasRentados.length === 0 ? (
-          <p className="texto-lead">Todavía no hay rentas esta semana.</p>
-        ) : (
-          <ol className="ranking">
-            {datos.articulosMasRentados.map((articulo) => (
-              <li key={articulo.articuloId} className="ranking__fila">
-                <span>{articulo.descripcion}</span>
-                <span className="ranking__cifra">{articulo.unidades}</span>
-              </li>
-            ))}
-          </ol>
-        )}
+        <article className="panel dash-card dash-card--menta">
+          <p className="tarjeta__titulo">Situación actual</p>
+          <p className="cifra"><CifraAnimada valor={sit.colaEntrega} /></p>
+          <dl className="datos">
+            <div className="dato"><dt>Por recoger</dt><dd>{sit.porRecoger}</dd></div>
+            <div className="dato"><dt>Próximos 7 días</dt><dd>{sit.proximosSieteDias}</dd></div>
+            <div className="dato"><dt>Con daños sin resolver</dt><dd>{sit.conDanosSinResolver}</dd></div>
+            <div className="dato"><dt>Saldo por cobrar</dt><dd>{formatoDinero.format(sit.saldoPorCobrar)}</dd></div>
+          </dl>
+        </article>
+
+        <article className="panel dash-card dash-card--media">
+          <p className="tarjeta__titulo">Estado de los pedidos de la semana</p>
+          <div className="dona-fila">
+            <Dona
+              segmentos={[
+                { etiqueta: "Por entregar", valor: s.pendientesDeEntregar, tono: 1 },
+                { etiqueta: "Por recoger", valor: s.porRecoger, tono: 2 },
+                { etiqueta: "Por revisar", valor: s.porRevisar, tono: 3 },
+                { etiqueta: "Cerrados", valor: s.cerrados, tono: 4 },
+              ]}
+            />
+            <ul className="leyenda">
+              <li><span className="punto punto--ed" />Por entregar <strong>{s.pendientesDeEntregar}</strong></li>
+              <li><span className="punto punto--b2" />Por recoger <strong>{s.porRecoger}</strong></li>
+              <li><span className="punto punto--68" />Por revisar <strong>{s.porRevisar}</strong></li>
+              <li><span className="punto punto--3a" />Cerrados <strong>{s.cerrados}</strong></li>
+            </ul>
+          </div>
+        </article>
+
+        <article className="panel dash-card dash-card--media">
+          <p className="tarjeta__titulo">Piezas en renta ahora</p>
+          {datos.ocupacion.length === 0 ? (
+            <p className="texto-lead">No hay piezas en renta en este momento.</p>
+          ) : (
+            <BarrasHorizontales
+              items={datos.ocupacion.map((o) => ({ nombre: o.descripcion, enRenta: o.enRenta, disponible: o.disponible }))}
+            />
+          )}
+        </article>
+
+        <article className="panel dash-card dash-card--ancha">
+          <p className="tarjeta__titulo">Artículos más rentados esta semana</p>
+          {datos.articulosMasRentados.length === 0 ? (
+            <p className="texto-lead">Todavía no hay rentas esta semana.</p>
+          ) : (
+            <ol className="ranking">
+              {datos.articulosMasRentados.map((articulo) => (
+                <li key={articulo.articuloId} className="ranking__fila">
+                  <span>{articulo.descripcion}</span>
+                  <span className="ranking__cifra">{articulo.unidades}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </article>
       </div>
     </section>
-  );
-}
-
-function Tarjeta({
-  titulo,
-  cifra,
-  children,
-}: {
-  titulo: string;
-  cifra: number;
-  children: React.ReactNode;
-}) {
-  return (
-    <article className="tarjeta">
-      <h2 className="texto-caption tarjeta__titulo">{titulo}</h2>
-      <p className="cifra">{cifra}</p>
-      <dl className="datos">{children}</dl>
-    </article>
-  );
-}
-
-function Dato({ etiqueta, valor }: { etiqueta: string; valor: number | string }) {
-  return (
-    <div className="dato">
-      <dt>{etiqueta}</dt>
-      <dd>{valor}</dd>
-    </div>
   );
 }

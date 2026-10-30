@@ -1,6 +1,8 @@
+import { notificar } from "./Notificaciones";
+import { Cargando } from "./Cargando";
 import { type FormEvent, useEffect, useState } from "react";
 import { type RolUsuario, type Usuario, ErrorApi } from "./api";
-import { Aviso, Campo, Encabezado, Vacio } from "./ui";
+import { Aviso, Campo, Encabezado } from "./ui";
 import {
   actualizarUsuario,
   cambiarActivoUsuario,
@@ -71,10 +73,12 @@ export default function Usuarios({ token, idActual }: Props) {
       if (edicion === "nuevo") {
         await crearUsuario(token, form);
         setExito("Usuario creado.");
+      notificar("Usuario creado.");
       } else if (edicion) {
         const { password: _omitida, ...datos } = form;
         await actualizarUsuario(token, edicion.id, datos);
         setExito("Usuario actualizado.");
+      notificar("Usuario actualizado.");
       }
       setEdicion(null);
       await cargar();
@@ -89,6 +93,7 @@ export default function Usuarios({ token, idActual }: Props) {
     try {
       await fn();
       setExito(mensaje);
+      notificar(mensaje);
       await cargar();
     } catch (err) {
       setError(err instanceof ErrorApi ? err.message : "No se pudo completar la acción.");
@@ -149,7 +154,7 @@ export default function Usuarios({ token, idActual }: Props) {
         </form>
       )}
 
-      {!usuarios && !error && <Vacio>Cargando…</Vacio>}
+      {!usuarios && !error && <Cargando />}
 
       {usuarios && usuarios.length > 0 && (
         <div className="tabla-envoltura">

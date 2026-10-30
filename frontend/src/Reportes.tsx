@@ -1,3 +1,4 @@
+import { Cargando } from "./Cargando";
 import { type ReactNode, useEffect, useState } from "react";
 import {
   descargarReporte,
@@ -152,7 +153,7 @@ function PorRecoger({ token }: { token: string }) {
   }, [token]);
 
   if (error) return <p className="login__error" role="alert">{error}</p>;
-  if (!pedidos) return <p className="texto-lead">Cargando…</p>;
+  if (!pedidos) return <Cargando />;
 
   return (
     <div className="reporte">
@@ -174,7 +175,7 @@ function Inventario({ token }: { token: string }) {
   }, [token]);
 
   if (error) return <p className="login__error" role="alert">{error}</p>;
-  if (!articulos) return <p className="texto-lead">Cargando…</p>;
+  if (!articulos) return <Cargando />;
 
   return (
     <div className="reporte">
