@@ -180,9 +180,9 @@ export default function Pedidos({ token, puedeOperar, puedeControlar }: Props) {
                   <td>#{p.id}</td>
                   <td>{p.clienteNombre}</td>
                   <td>{p.fechaHoraEntrega}</td>
-                  <td><span className="estado">{p.estado}</span></td>
+                  <td><span className={`estado estado--${p.estado.toLowerCase()}`}>{p.estado}</span></td>
                   <td className="numero">{formatoDinero.format(p.total)}</td>
-                  <td>{p.pagado ? "Pagado" : "No pagado"}</td>
+                  <td><span className={`estado ${p.pagado ? "estado--pagado" : "estado--pendiente"}`}>{p.pagado ? "Pagado" : "No pagado"}</span></td>
                   <td>
                     <button className="boton boton--secundario boton--chico" type="button"
                       onClick={() => { setAvisos([]); setExito(null); setVista({ modo: "detalle", id: p.id }); }}>

@@ -13,6 +13,12 @@
   --color-borde: rgba(229, 229, 229, 0.14);
   --color-borde-fuerte: rgba(229, 229, 229, 0.32);
   --color-dusk-violet: #6b62f2;
+  --color-ambar: #f4a261;
+  --color-coral: #e76f51;
+  --color-cobalto: #2f4fd0;
+  --color-menta: #2ec4a0;
+  --color-violeta: #9b7bf0;
+  --color-rosa: #ef476f;
   --color-superficie: #1b1b1b;
   --color-entrada: #0e0e0e;
   --color-borde-visible: rgba(229, 229, 229, 0.24);
@@ -130,13 +136,14 @@ p {
 }
 
 .boton--primario {
-  color: var(--color-graphite);
-  background: var(--color-snow-white);
-  border-color: var(--color-snow-white);
+  color: #0a0a0a;
+  background: linear-gradient(135deg, var(--color-ambar) 0%, var(--color-coral) 100%);
+  border-color: transparent;
+  box-shadow: 0 10px 28px -12px rgba(244, 162, 97, 0.7);
 }
 
 .boton--primario:hover:not(:disabled) {
-  background: var(--color-bone);
+  filter: brightness(1.08);
 }
 
 .boton--secundario {
@@ -196,8 +203,8 @@ p {
 .campo__input:focus,
 .campo select:focus,
 .campo textarea:focus {
-  border-color: var(--color-borde-fuerte);
-  box-shadow: 0 0 0 3px rgba(229, 229, 229, 0.08);
+  border-color: var(--color-ambar);
+  box-shadow: 0 0 0 4px rgba(244, 162, 97, 0.18);
 }
 
 .campo select {
@@ -323,7 +330,7 @@ p {
 }
 
 .tabla tbody tr:hover {
-  background: rgba(237, 237, 237, 0.03);
+  background: rgba(244, 162, 97, 0.06);
 }
 
 .numero {
@@ -339,6 +346,37 @@ p {
   border: 1px solid var(--color-borde-fuerte);
   border-radius: var(--radius-buttons);
   color: var(--color-bone);
+}
+
+/* Estados de pedido y de pago: píldoras de color */
+.estado--activo,
+.estado--pagado {
+  color: #0a0a0a;
+  background: var(--color-ambar);
+  border-color: transparent;
+}
+
+.estado--cerrado {
+  color: #04201a;
+  background: var(--color-menta);
+  border-color: transparent;
+}
+
+.estado--cancelado {
+  color: #ff8ba3;
+  background: rgba(239, 71, 111, 0.12);
+  border-color: rgba(239, 71, 111, 0.6);
+}
+
+.estado--pagado {
+  color: #04201a;
+  background: var(--color-menta);
+}
+
+.estado--pendiente {
+  color: var(--color-ambar);
+  background: rgba(244, 162, 97, 0.12);
+  border-color: rgba(244, 162, 97, 0.6);
 }
 
 .avisos,
@@ -1310,6 +1348,55 @@ p {
 .dash-card {
   grid-column: span 12;
   min-width: 0;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--acento-1, transparent) 16%, transparent), transparent 60%),
+    var(--color-superficie);
+}
+
+/* Franja de color superior; cada tarjeta elige su acento con un modificador */
+.dash-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--acento-1, transparent), var(--acento-2, transparent));
+}
+
+.dash-card--ambar {
+  --acento-1: var(--color-ambar);
+  --acento-2: var(--color-coral);
+}
+
+.dash-card--cobalto {
+  --acento-1: #4f6df5;
+  --acento-2: var(--color-cobalto);
+}
+
+.dash-card--menta {
+  --acento-1: var(--color-menta);
+  --acento-2: #14a085;
+}
+
+.dash-card--violeta {
+  --acento-1: var(--color-violeta);
+  --acento-2: #6b5ce0;
+}
+
+.dash-card .cifra,
+.dash-card .dash-card__cifra-grande {
+  background: linear-gradient(90deg, var(--acento-1, var(--color-bone)), var(--acento-2, var(--color-bone)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.dashboard__saludo {
+  display: grid;
+  gap: 4px;
 }
 
 @media (min-width: 900px) {
@@ -1561,16 +1648,6 @@ p {
   box-shadow: 0 1px 2px rgba(23, 23, 23, 0.05);
 }
 
-:root[data-tema="claro"] .boton--primario {
-  color: #ffffff;
-  background: #171717;
-  border-color: #171717;
-}
-
-:root[data-tema="claro"] .boton--primario:hover:not(:disabled) {
-  background: #2c2c2c;
-}
-
 :root[data-tema="claro"] .menu__barra {
   background: rgba(255, 255, 255, 0.86);
 }
@@ -1587,7 +1664,20 @@ p {
 }
 
 :root[data-tema="claro"] .tabla tbody tr:hover {
-  background: rgba(23, 23, 23, 0.03);
+  background: rgba(244, 162, 97, 0.08);
+}
+
+:root[data-tema="claro"] .estado--cancelado {
+  color: #c81e4a;
+}
+
+:root[data-tema="claro"] .estado--pendiente {
+  color: #b8601c;
+}
+
+:root[data-tema="claro"] .dash-card .cifra,
+:root[data-tema="claro"] .dash-card .dash-card__cifra-grande {
+  color: transparent;
 }
 
 :root[data-tema="claro"] .dona__base {
@@ -1602,13 +1692,8 @@ p {
   background: #ececec;
 }
 
-:root[data-tema="claro"] .punto--ed { background: #171717; }
-:root[data-tema="claro"] .punto--b2 { background: #6b6b6b; }
-:root[data-tema="claro"] .punto--68 { background: #a6a6a6; }
-:root[data-tema="claro"] .punto--3a { background: #dcdcdc; }
-
 :root[data-tema="claro"] .barras-h__relleno {
-  background: linear-gradient(90deg, #171717, #5c5c5c);
+  background: linear-gradient(90deg, #e07a2f, #2f4fd0);
 }
 
 :root[data-tema="claro"] .esqueleto {
@@ -1635,19 +1720,28 @@ p {
 }
 
 /* Colores de las gráficas: se definen aquí para que cambien con el tema */
-.grafica__stop-inicio { stop-color: #ededed; }
-.grafica__stop-fin { stop-color: #6b62f2; }
-:root[data-tema="claro"] .grafica__stop-inicio { stop-color: #171717; }
-:root[data-tema="claro"] .grafica__stop-fin { stop-color: #6b62f2; }
+.grafica__stop-inicio { stop-color: #f4a261; }
+.grafica__stop-fin { stop-color: #4f6df5; }
+:root[data-tema="claro"] .grafica__stop-inicio { stop-color: #e07a2f; }
+:root[data-tema="claro"] .grafica__stop-fin { stop-color: #2f4fd0; }
 
-.dona__segmento--1 { stroke: #ededed; }
-.dona__segmento--2 { stroke: #b2b2b2; }
-.dona__segmento--3 { stroke: #686868; }
-.dona__segmento--4 { stroke: #3a3a3a; }
-:root[data-tema="claro"] .dona__segmento--1 { stroke: #171717; }
-:root[data-tema="claro"] .dona__segmento--2 { stroke: #6b6b6b; }
-:root[data-tema="claro"] .dona__segmento--3 { stroke: #a6a6a6; }
-:root[data-tema="claro"] .dona__segmento--4 { stroke: #dcdcdc; }
+.dona__segmento--1 { stroke: #f4a261; }
+.dona__segmento--2 { stroke: #4f6df5; }
+.dona__segmento--3 { stroke: #2ec4a0; }
+.dona__segmento--4 { stroke: #9b7bf0; }
+:root[data-tema="claro"] .dona__segmento--1 { stroke: #e07a2f; }
+:root[data-tema="claro"] .dona__segmento--2 { stroke: #2f4fd0; }
+:root[data-tema="claro"] .dona__segmento--3 { stroke: #14a085; }
+:root[data-tema="claro"] .dona__segmento--4 { stroke: #7a5cc6; }
+
+.punto--ed { background: #f4a261; }
+.punto--b2 { background: #4f6df5; }
+.punto--68 { background: #2ec4a0; }
+.punto--3a { background: #9b7bf0; }
+
+.barras-h__relleno {
+  background: linear-gradient(90deg, #f4a261, #4f6df5);
+}
 
 /* Logo */
 .menu__logo {

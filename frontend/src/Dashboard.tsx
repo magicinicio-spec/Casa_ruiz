@@ -26,16 +26,21 @@ export default function Dashboard({ token }: Props) {
 
   const s = datos.semana;
   const sit = datos.situacion;
+  const hora = new Date().getHours();
+  const saludo = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches";
 
   return (
     <section className="dashboard">
-      <p className="texto-caption">
-        Hoy {datos.fecha} · Semana del {datos.inicioSemana} al {datos.finSemana}
-      </p>
+      <header className="dashboard__saludo">
+        <h2 className="titulo-subheading">{saludo}</h2>
+        <p className="texto-caption">
+          Hoy {datos.fecha} · Semana del {datos.inicioSemana} al {datos.finSemana}
+        </p>
+      </header>
 
       <div className="dash-grid animar">
         {/* Tarjeta principal: ingresos y pedidos de la semana */}
-        <article className="panel dash-card dash-card--ancha">
+        <article className="panel dash-card dash-card--ancha dash-card--ambar">
           <div className="dash-card__cabecera">
             <div>
               <p className="tarjeta__titulo">Ingresos de la semana</p>
@@ -46,7 +51,7 @@ export default function Dashboard({ token }: Props) {
           <GraficaDias dias={datos.diasSemana} />
         </article>
 
-        <article className="panel dash-card">
+        <article className="panel dash-card dash-card--cobalto">
           <p className="tarjeta__titulo">Pedidos para hoy</p>
           <p className="cifra"><CifraAnimada valor={datos.dia.pedidosParaHoy} /></p>
           <dl className="datos">
@@ -54,7 +59,7 @@ export default function Dashboard({ token }: Props) {
           </dl>
         </article>
 
-        <article className="panel dash-card">
+        <article className="panel dash-card dash-card--violeta">
           <p className="tarjeta__titulo">Esta semana</p>
           <p className="cifra"><CifraAnimada valor={s.total} /></p>
           <dl className="datos">
@@ -63,7 +68,7 @@ export default function Dashboard({ token }: Props) {
           </dl>
         </article>
 
-        <article className="panel dash-card">
+        <article className="panel dash-card dash-card--menta">
           <p className="tarjeta__titulo">Situación actual</p>
           <p className="cifra"><CifraAnimada valor={sit.colaEntrega} /></p>
           <dl className="datos">
